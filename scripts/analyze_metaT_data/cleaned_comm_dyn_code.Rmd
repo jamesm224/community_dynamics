@@ -1,0 +1,972 @@
+---
+title: "cleaned_comm_dyn_code"
+output: github_document
+date: "2024-10-15"
+---
+
+##### 1. Load Packages
+```{r}
+library(DESeq2)
+library(ggplot2)
+library(ggrepel)
+library(hexbin)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(cowplot)
+library(pheatmap)
+library(matrixStats)
+library(forcats)
+library(edgeR)
+library(MicrobiotaProcess)
+library(clusterProfiler)
+library(enrichplot)
+library(Cairo)
+```
+
+##### 2. Define Functions for QC Analysis
+```{r}
+##### 1. Preprocess samples and metadata for edgeR input #####
+process_input_file_QC <- function(input_file,metadata_table,control,treatment,experiment_day,genome) {
+  # Load Input File #
+  raw_counts <- read.csv(file = input_file,sep = '\t')
+  raw_counts<- raw_counts%>% filter(organism == genome)
+
+  # Remove outliers #
+  raw_counts <- subset(raw_counts, select = -c(`MED4ax_all_B_DAY2`,`MED4ax_1907_C_DAY2`,organism))
+  
+  # Clean df # 
+  rownames(raw_counts) <- raw_counts$ID
+  #raw_counts <- subset(raw_counts, select = -ID)
+
+  # Load metadata and filter to comparison groups # 
+  metadata_table <- read.csv(file = metadata_table)
+
+  # Convert df to long format #
+  df_long <- pivot_longer(raw_counts, 
+                        cols = starts_with("MED4ax_"),
+                        names_to = c("experiment_type", "rep", "day"),
+                        names_pattern = "MED4ax_([\\w\\d]+)_(\\w+)_(DAY\\d+)",
+                        values_to = "count")
+  # Convert rep and day to factors for easier manipulation #
+  df_long<- df_long%>% filter(day != experiment_day)
+  df_long$rep <- as.factor(df_long$rep)
+  df_long$day <- as.factor(df_long$day)
+  df_long$experiment_type <- as.factor(df_long$experiment_type)
+
+  # Return Cleaned Table #
+  return(df_long)
+}
+
+##### 2. Plot Boxplot for each gene in Analysis #####
+plot_boxplot<- function(data_processing_output_QC) {
+  # Graph Data #
+  overview_boxplot <- ggplot(data_processing_output_QC, aes(x = rep, y = count,color=rep)) +
+    geom_boxplot() +
+    facet_grid(day ~ experiment_type, scales = "free_x") +  # Split by day and experiment type, free scales for better visualization
+    labs(x = "Replicate", y = "Gene Count") +
+    theme_classic() +
+    theme(
+      axis.text.x = element_text(family = "Helvetica",color='black',size=16),
+      #axis.text.x = element_text(family = "Helvetica",color='black',size=16,angle = 90,hjust=0.9,vjust=0.5),
+      #axis.text.x = element_blank(),
+      axis.text.y = element_text(family = "Helvetica",color='black',size=16),
+      #axis.title.x = element_text(family = "Helvetica",color='black',size=22),
+      axis.title.x = element_blank(),
+      axis.title.y = element_text(family = "Helvetica",color='black',size=16),
+      strip.text = element_text(family = "Helvetica",color='black',size=16),
+      legend.text = element_text(family = "Helvetica",size = 16),
+      legend.title = element_text(family = "Helvetica",size = 16),
+      panel.border=element_blank(),
+      panel.background = element_rect(colour = "black", size=1),
+      legend.position='top')+
+    scale_color_brewer(palette = "Set2")+
+    scale_y_log10()
+
+  return(overview_boxplot)
+}
+
+##### 3. Plot Boxplot for each gene in Analysis #####
+plot_correlation_plot<- function(data_processing_output_QC) {
+  # Reshape the data to wide format with separate columns for each replicate
+  df_wide <- data_processing_output_QC %>%
+    pivot_wider(names_from = rep, values_from = count, names_prefix = "rep_")
+  
+  # Create scatter plots for A vs B, A vs C, B vs C
+  # Note: Ensure all columns are present in the wide format df
+  # Change out A, B, or C depending on which two you want to compare #
+  df_scatter <- df_wide %>%
+    pivot_longer(cols = starts_with("rep_"), names_to = "replicate", values_to = "count") %>%
+    mutate(replicate = str_remove(replicate, "rep_")) %>%
+    pivot_wider(names_from = replicate, values_from = count) %>%
+    replace_na(list(A = 0, B = 0, C = 0)) %>% 
+    mutate(log_A = log10(A + 1),  # Add 1 to avoid log10(0) issues
+           log_B = log10(B + 1),
+           log_C = log10(C + 1),)
+
+
+  # Calculate Spearman correlation for each combination of day and experiment_type
+  correlation_df <- df_scatter %>%
+    dplyr::group_by(day,experiment_type) %>%
+    dplyr::summarise(corr = cor(log_A, log_B, method = "spearman"), .groups = 'drop')
+    #summarise(corr = cor(A, B, method = "spearman"), .groups = 'drop')
+    #summarise(corr = cor(log_A, log_C, method = "spearman"), .groups = 'drop')
+    
+  # Plot scatterplots for each comparison type
+  correlation_plot <- ggplot(df_scatter, aes(x = log_A, y = log_B,color=experiment_type)) +
+    geom_point(size=0.8) +  
+    facet_grid(day ~ experiment_type) +
+    labs(x = "log10 Gene Abundance Replicate A", y = "log10 Gene Abundance Replicate B") +
+    theme_classic() +
+    theme(
+      axis.text.x = element_text(family = "Helvetica",color='black',size=16),
+      axis.text.y = element_text(family = "Helvetica",color='black',size=16),
+      axis.title.x = element_text(family = "Helvetica",color='black',size=16),
+      plot.title = element_text(family = "Helvetica",color='black',size=16,hjust = 0.5),
+      axis.title.y = element_text(family = "Helvetica",color='black',size=16),
+      strip.text = element_text(family = "Helvetica",color='black',size=16),
+      legend.text = element_text(family = "Helvetica",size = 16),
+      legend.title = element_text(family = "Helvetica",size = 16),
+      legend.key.size = unit(1, "cm"),  # Increase legend key size
+      panel.border=element_blank(),
+      panel.background = element_rect(colour = "black", size=1),
+      legend.position='none')+
+    ggtitle('Gene Abundance Replicate A vs B')+
+    scale_color_brewer(palette = "Set2")+
+    #scale_fill_viridis(option="D")+
+    geom_text(data = correlation_df, aes(x = Inf, y = Inf, label = sprintf("Spearman: %.2f", corr)),
+              hjust = 1.4, vjust = 2, size = 3, inherit.aes = FALSE)
+  return(correlation_plot)
+}
+
+```
+
+##### 2. Generate QC Plots
+```{r,fig.width=12, fig.height=8}
+
+##### Define Input Files #####
+input_file <- "/Users/jamesmullet/updated_unfcm_corrected_gene_counts.tsv"
+metadata_table <- "/Users/jamesmullet/pooled_key.csv"
+genome<-"MED4"
+#genome<-"Pseudohoeflea_1940"
+experiment_day <- "DAY6"
+
+##### Run Preprocessing Step #####
+data_processing_output_QC <-process_input_file_QC(input_file,metadata_table,control,treatment,experiment_day,genome)
+head(data_processing_output_QC)
+
+##### Generate Replicate Boxplot #####
+boxplot <- plot_boxplot(data_processing_output_QC)
+boxplot
+
+##### Generate Replicate Correlation Plots #####
+# For this plot you have to go to the function and comment out the different replicates for different comparisons #
+correlation_plot <- plot_correlation_plot(data_processing_output_QC)
+correlation_plot
+```
+##### 3. Define Functions for EdgeR Analysis
+```{r}
+##### 1. Preprocess samples and metadata for edgeR input #####
+process_input_file <- function(input_file,metadata_table,control,treatment,day,genome) {
+  # Load Input File #
+  raw_counts <- read.csv(file = input_file,sep = '\t')
+  raw_counts<- raw_counts%>% filter(organism == genome)
+
+  # Remove outliers #
+  raw_counts <- subset(raw_counts, select = -`MED4ax_all_B_DAY2`)
+  raw_counts <- subset(raw_counts, select = -`MED4ax_1907_C_DAY2`)
+  raw_counts <- subset(raw_counts, select = -organism)
+  
+  # Clean df # 
+  rownames(raw_counts) <- raw_counts$ID
+  raw_counts <- subset(raw_counts, select = -ID)
+
+  # Load metadata and filter to comparison groups # 
+  metadata_table <- read.csv(file = metadata_table)
+  metadata_table<- metadata_table%>% filter((experimental_trial == control)|(experimental_trial == treatment))
+  metadata_table<- metadata_table%>% filter(sampling_day == day)
+  rownames(metadata_table) <- metadata_table$sample
+  
+  # Ensure metadata and gene count tables have the same rows/columns as each other #
+  metadata_table <- metadata_table[rownames(metadata_table) %in% colnames(raw_counts), ]
+  matching_columns <- colnames(raw_counts) %in% rownames(metadata_table)
+  raw_counts_filtered <- raw_counts[, matching_columns]
+
+  # Replace NA values with 0 #
+  raw_counts_filtered[is.na(raw_counts_filtered)] <- 0
+  metadata_table <- metadata_table[match(colnames(raw_counts_filtered), rownames(metadata_table)), ]
+  
+  # Return Cleaned Tables #
+  return(list(cleaned_raw_counts = raw_counts_filtered, cleaned_metadata = metadata_table))
+}
+
+##### 2. Run EdgeR on Input Data #####
+run_edgeR <- function(cleaned_metadata,cleaned_raw_counts,small_annotations,genome) {
+  
+  # Extract experimental groups from metadata - ensure control is the reference group #
+  group <- cleaned_metadata$experimental_trial
+  group <- factor(group)
+  group <- relevel(group, ref = control)
+
+  # Create edgeR object #
+  edgeR_output <- DGEList(counts = cleaned_raw_counts, group = group)
+  
+  # Calculate the normalization factors for edgeR - using TMM #
+  edgeR_output <- calcNormFactors(edgeR_output,method='TMM')
+
+  # Create a design matrix for analysis #
+  design <- model.matrix(~ group, data = cleaned_metadata)
+  
+  # Estimate dispersion for samples #
+  edgeR_output <- estimateDisp(edgeR_output, design)
+  
+  # Fit the model using glmQLFit and Robust=True #
+  fit <- glmQLFit(edgeR_output, design,robust=TRUE)
+  
+  # Obtain statistical significance #
+  results <- glmQLFTest(fit)
+  
+  # Obtain results #
+  results_df <- topTags(results, n = Inf)$table
+  results_df$ID <- rownames(results_df)
+
+  # Align Output with annotations #
+  results_w_annot <- merge(results_df, small_annotations, by = "ID")
+  
+  # Optional Filter out non significant genes #
+  #results_w_annot<- results_w_annot%>% filter(FDR < 0.05 )
+  results_w_annot
+  return(results_w_annot)
+}
+```
+
+##### 3. Running EdgeR Analysis
+```{r,fig.width=12, fig.height=8}
+##### Define Appropriate Input Files for EdgeR Analysis #####
+##### Make sure to define control vs treatment - control results in negative LFC and can be defined by user #####
+##### Define day for comparison and genome/organism that you want to perform edgeR on #####
+annotations <- read.csv(file = 'annotations.tsv',sep = '\t')
+small_annotations <- subset(annotations, select = c('ID','em_Preferred_name','em_desc'))
+input_file <- "/Users/jamesmullet/updated_unfcm_corrected_gene_counts.tsv"
+metadata_table <- "/Users/jamesmullet/pooled_key.csv"
+
+# Define Reference Genome #
+#genome<-"MED4"
+genome<-"Thalassospira_1907"
+#genome<-"Pseudohoeflea_1940"
+
+# Define control group (negative LFC) #
+#control <-"control"
+control <-"thalassospira_1"
+#control<-"pseudohoeflea"
+
+# Define treatment group (positive LFC) #
+#treatment <- "marinobacter"
+#treatment <- "alteromonas"
+#treatment <- "pseudohoeflea"
+#treatment <- "thalassospira_1"
+treatment <- "thalassospira_2"
+#treatment <- "community"
+#day <- "2"
+#day <- "4"
+day <- "5"
+
+##### Run Preprocessing Step #####
+data_processing_output <-process_input_file(input_file,metadata_table,control,treatment,day,genome)
+cleaned_metadata <- data_processing_output$cleaned_metadata
+cleaned_raw_counts <- data_processing_output$cleaned_raw_counts
+
+##### Run EdgeR Step #####
+edgeR_output <- run_edgeR(cleaned_metadata,cleaned_raw_counts,small_annotations,control)
+#head(edgeR_output)
+
+##### Save output files #####
+#write.csv(edgeR_output, "comm_dyn_edgeR_1905_1907_analysis_Pro_day2.csv", row.names = FALSE)
+#write.csv(edgeR_output, "comm_dyn_edgeR_1905_1907_analysis_Pro_day4.csv", row.names = FALSE)
+#write.csv(edgeR_output, "comm_dyn_edgeR_1905_1907_analysis_Pro_day5.csv", row.names = FALSE)
+#write.csv(edgeR_output, "comm_dyn_edgeR_1905_1907_analysis_thalassospira_day2.csv", row.names = FALSE)
+#write.csv(edgeR_output, "comm_dyn_edgeR_1905_1907_analysis_thalassospira_day4.csv", row.names = FALSE)
+write.csv(edgeR_output, "comm_dyn_edgeR_1905_1907_analysis_thalassospira_day5.csv", row.names = FALSE)
+
+#write.csv(edgeR_output, "comm_dyn_edgeR_Pro_day2_marinobacter.csv", row.names = FALSE)
+#write.csv(edgeR_output, "comm_dyn_edgeR_Pro_day2_alteromonas.csv", row.names = FALSE)
+#write.csv(edgeR_output, "comm_dyn_edgeR_Pro_day2_thalassospira_1.csv", row.names = FALSE)
+#write.csv(edgeR_output, "comm_dyn_edgeR_Pro_day2_thalassospira_2.csv", row.names = FALSE)
+#write.csv(edgeR_output, "comm_dyn_edgeR_Pro_day2_pseudohoeflea.csv", row.names = FALSE)
+#write.csv(edgeR_output, "comm_dyn_edgeR_Pro_day2_community.csv", row.names = FALSE)
+
+
+```
+
+##### 4. Define Functions for Analyzing Significant Genes
+```{r}
+##### 1. Generate Heatmaps on Input Data for Pro#####
+prepare_heatmap_dfs_pro <- function(input_gene_table_file,experiment_day,new_organism) {
+  
+  # Load Gene Table #
+  gene_table <- read.csv(file = input_gene_table_file,header = TRUE, check.names = FALSE)
+  #gene_table<- gene_table%>% filter(day == experiment_day)
+  #pro_gene_table
+
+  # Convert table to a Long Format #
+  df_long <- gene_table %>%
+    pivot_longer(
+      cols = contains("_LFC") | contains("_pvalue")| contains("_padj"),
+      names_to = c("treatment", ".value"),
+      names_pattern = "(.*)_(.*)")
+  
+  # Obtain the genes that have are significant - as defined by LFC > 1.5 or LFC < -1.5 AND padj < 0.05 #
+  df_long <- df_long %>%
+    mutate(significance = ifelse(padj < 0.05 & abs(LFC) > 1.5, "significant", "not significant"))
+  
+  # Remove additional technical replicate #
+  df_long<- df_long%>% filter(treatment != 'Thalassospira_1')
+  
+  # Rename samples for interpretability #
+  df_long$treatment <- gsub("Thalassospira_2", "Thalassospira", df_long$treatment)
+  df_long$day <- gsub("2", "Day2", df_long$day)
+  df_long$day <- gsub("4", "Day4", df_long$day)
+  df_long$day <- gsub("5", "Day5", df_long$day)
+
+  df_long <- df_long %>% mutate(updated_treatment_name = paste(treatment, day, sep = "_"))
+  df_long<- df_long%>% filter(organism == new_organism)
+  df_long
+  
+  # Define the significant genes accross each treatment
+  significant_genes <- df_long %>%
+    filter(significance == "significant") %>%  # Keep only significant genes
+    select(ID,em_Preferred_name,em_desc) %>%                        # Select only the gene identifier column
+    distinct()
+  #significant_genes
+  df_long_reordered <- df_long[order(df_long$day), ]
+  #df_long_reordered <- df_long_reordered[order(df_long_reordered$treatment), ]
+  #df_long_reordered <- df_long_reordered[order(df_long_reordered$day), ]
+  # Clean DF #
+  df_long_reordered <- subset(df_long_reordered, select = -c(em_desc,day,organism,treatment,em_Preferred_name,pvalue,padj,significance))
+  df_long_reordered
+
+  # Convert DF to a wide format for Heatmap # 
+  df_wide <- df_long_reordered %>%
+    pivot_wider(names_from = updated_treatment_name,values_from = LFC)
+  
+  # Only keep genes with at least one significant gene accross all treatments #
+  df_wide<- df_wide%>%filter(ID%in%significant_genes$ID)%>%
+    as.data.frame()
+  rownames(df_wide) <- df_wide$ID
+  
+  # Remove Sample column #
+  df_wide <- subset(df_wide, select = -c(ID))
+  
+  # Transpose DF for Heatmap #
+  transposed_df <- t(df_wide)%>%
+    as.data.frame()
+  
+  # Return Cleaned Tables #
+  return(list(transposed_df = transposed_df, long_df = df_long))
+}
+
+##### 2. Generate Heatmaps on Input Data for Hets #####
+prepare_heatmap_dfs_hets <- function(input_gene_table_file_hets,new_organism) {
+  
+  # Load Gene Table #
+  het_gene_table <- read.csv(file = input_gene_table_file_hets,header = TRUE, check.names = FALSE)
+  het_gene_table<- het_gene_table%>% filter(treatment == new_organism)
+  #pro_gene_table
+
+  # Convert table to a Long Format #
+  df_long <- het_gene_table %>%
+    pivot_longer(
+      cols = contains("_LFC") | contains("_pvalue")| contains("_padj"),
+      names_to = c("day", ".value"),
+      names_pattern = "(.*)_(.*)")
+  
+  
+  # Obtain the genes that have are significant - as defined by LFC > 1.5 or LFC < -1.5 AND padj < 0.05 #
+  df_long <- df_long %>%
+    mutate(significance = ifelse(padj < 0.05 & abs(LFC) > 1.5, "significant", "not significant"))
+
+  
+  # Rename samples for interpretability #
+  #df_long$treatment <- gsub("Thalassospira_2", "Thalassospira", df_long$treatment)
+  df_long
+  
+  # Define the significant genes accross each treatment
+  significant_genes <- df_long %>%
+    filter(significance == "significant") %>%  # Keep only significant genes
+    select(ID,em_Preferred_name,em_desc) %>%                        # Select only the gene identifier column
+    distinct()
+  #significant_genes
+  
+  # Clean DF #
+  df_long_reordered <- df_long[order(df_long$day), ]
+  df_long_reordered <- subset(df_long_reordered, select = -c(em_desc,treatment,em_Preferred_name,pvalue,padj,significance))
+  df_long_reordered
+
+  # Convert DF to a wide format for Heatmap # 
+  df_wide <- df_long_reordered %>%
+    pivot_wider(names_from = day,values_from = LFC)
+  
+  # Only keep genes with at least one significant gene accross all treatments #
+  df_wide<- df_wide%>%filter(ID%in%significant_genes$ID)%>%
+    as.data.frame()
+  rownames(df_wide) <- df_wide$ID
+  
+  # Remove Sample column #
+  df_wide <- subset(df_wide, select = -c(ID))
+  
+  # Transpose DF for Heatmap #
+  transposed_df <- t(df_wide)%>%
+    as.data.frame()
+  # Return Cleaned Tables #
+  return(list(transposed_df = transposed_df, long_df = df_long))
+}
+
+##### Generate Heatmaps and Gene Clusters #####
+generate_heatmaps <- function(transposed_df,num_clusters) {
+  neg_colors <- colorRampPalette(c("blue", "white"))(25)  # From blue to white for negative values
+  pos_colors <- colorRampPalette(c("white", "red"))(25)   # From white to red for positive values
+  color_palette <- c(neg_colors, pos_colors[-1])
+  breaks <- c(seq(-15, 0, length.out = 25), seq(0, 15, length.out = 24)[-1])
+
+  # Plot Heatmap using pheatmap package #
+  heatmap <- pheatmap(transposed_df,cluster_rows = FALSE,show_colnames = FALSE,color = color_palette,
+                    clustering_distance_rows = "correlation", clustering_distance_cols = "correlation",clustering_method = "ward.D2",
+                    breaks=breaks)
+  # Extract row clustering information (dendrogram)
+  gene_clusters <- cutree(heatmap$tree_col, k = num_clusters)  # k = 2 for two main clusters
+  gene_clusters
+
+  # Convert col_clusters to a data frame for annotation
+  col_annotation <- data.frame(Cluster = factor(gene_clusters))
+  # Step 2: Adjust the factor levels to ensure Cluster 1 comes first, then 2, etc.
+  col_annotation$Cluster <- factor(col_annotation$Cluster, levels = sort(unique(gene_clusters)))
+
+
+  # Set row names of annotation to match column names of the original matrix
+  rownames(col_annotation) <- colnames(transposed_df)
+
+  # Step 3: Plot the heatmap with column cluster annotations
+  updated_heatmap <- pheatmap(transposed_df,cluster_rows = FALSE,show_colnames = FALSE,annotation_col = col_annotation,
+                            cluster_cols = heatmap$tree_col,annotation_names_col= FALSE,color = color_palette)
+
+  return(list(updated_heatmap = updated_heatmap, gene_clusters = gene_clusters))
+}
+
+
+##### 3. Extract Gene Cluster Information #####
+extract_cluster_information <- function(gene_clusters,num_clusters,annotation_file,cog_file,new_organism) {
+  
+  # Load Input Files #
+  annotations <- read.csv(file = annotation_file,sep = '\t')
+  annotations<- annotations%>% filter(organism == new_organism)
+  cog_key <- read.csv(file = cog_file,sep = '\t')
+  rownames(annotations) <- annotations$ID
+  annotations$em_COG_cat <- str_replace_all(annotations$em_COG_cat, "None", "-")
+  annotations <- annotations %>%
+    mutate(em_COG_cat = strsplit(as.character(em_COG_cat), "")) %>%
+    unnest(em_COG_cat) %>%
+    as.data.frame()
+  
+  
+
+  # Obtain Merged Annotation File #
+  merged_annotations <- merge(annotations, cog_key, by = "em_COG_cat", all.x = TRUE)
+  #merged_annotations$updated_COG_name <- trimws(merged_annotations$updated_COG_name)
+  
+  # Create empty list #
+  filtered_genes <- list()
+
+  # Loop through gene cluster values #
+  for (i in 1:num_clusters) {
+    # Obtain genes in cluster #
+    cluster_genes <- names(gene_clusters[gene_clusters == i])
+  
+    # Filter df for only genes in that cluster #
+    filtered_genes[[i]] <- merged_annotations %>% filter(ID %in% cluster_genes)
+  
+    # Add cluster name to df #
+    filtered_genes[[i]]$cluster <- paste0("Cluster ", i)
+  }
+
+  # Combine all of the gene clusters together #
+  combined_df <- bind_rows(filtered_genes)
+
+  return(combined_df)
+}
+
+##### 4. Plot DEG COG Distribution #####
+graph_overview_bar_chart <- function(cluster_output,cluster_colors) {
+  # Overview Counts #
+  cluster_COG_counts <- cluster_output %>%
+    dplyr::group_by(updated_COG_name,cluster) %>%
+    dplyr::summarise(counts = n()) %>% 
+    as.data.frame()
+  cluster_COG_counts <- cluster_COG_counts %>% mutate(counts = ifelse(cluster == "Cluster 1", counts * -1, counts))
+  
+  cluster_COG_counts$updated_COG_name <- fct_rev(cluster_COG_counts$updated_COG_name)
+  # Plot #
+  stacked_bar_cog_graph<-
+    ggplot(cluster_COG_counts, aes(x=updated_COG_name,y=counts,fill=cluster))+
+    #geom_bar(stat = "identity", position = "dodge", color = "black", width = 0.7) +
+    geom_bar(stat = "identity", position = "identity", color = "black", width = 0.7) +
+    geom_hline(yintercept = 0,color='black')+
+    theme_classic()+
+    theme(
+      axis.text.x = element_text(family = "Helvetica",color='black',size=16),
+      axis.text.y = element_text(family = "Helvetica",color='black',size=16),
+      axis.title.x = element_text(family = "Helvetica",color='black',size=16),
+      axis.title.y = element_blank(),
+      #axis.title.y = element_text(family = "Helvetica",color='black',size=16),
+      strip.text = element_text(family = "Helvetica",color='black',size=16),
+      legend.text = element_text(family = "Helvetica",size = 16),
+      legend.title = element_text(family = "Helvetica",size = 16),
+      panel.border=element_blank(),
+      panel.background = element_rect(colour = "black", size=1),
+      legend.position='right')+
+    #scale_y_continuous(breaks = seq(-300, 200, 50),labels = abs,limits=c(-300,200))+
+    scale_fill_manual(values = cluster_colors) +
+    ylab('number of differentially expressed genes')+
+    coord_flip()
+    #facet_grid(cols=vars(day))
+
+  return(stacked_bar_cog_graph)
+}
+
+
+##### 5. Visualize Dot Plot for Pro #####
+graph_overview_dotplot_pro <- function(long_df,new_organism,annotation_file,cog_file) {
+  # Load Input Files #
+  annotations <- read.csv(file = annotation_file,sep = '\t')
+  annotations<- annotations%>% filter(organism == new_organism)
+  cog_key <- read.csv(file = cog_file,sep = '\t')
+  rownames(annotations) <- annotations$ID
+  annotations$em_COG_cat <- str_replace_all(annotations$em_COG_cat, "None", "-")
+  annotations <- annotations %>%
+    mutate(em_COG_cat = strsplit(as.character(em_COG_cat), "")) %>%
+    unnest(em_COG_cat) %>%
+    as.data.frame()
+  
+  
+
+  # Obtain Merged Annotation File #
+  merged_annotations <- merge(annotations, cog_key, by = "em_COG_cat", all.x = TRUE)
+  merged_sig_annotations <- merge(merged_annotations, long_df, by = "ID")
+  merged_sig_annotations<- merged_sig_annotations%>% filter(significance == 'significant')
+  merged_sig_annotations
+
+  # Overview Counts #
+  grouped_sig_genes <- merged_sig_annotations %>%
+    dplyr::group_by(treatment,updated_COG_name,day) %>%
+    dplyr::summarise(counts = n(),
+              .groups = 'drop') %>%
+    as.data.frame()
+  #grouped_sig_genes<- grouped_sig_genes%>% filter(organisms != 'thalassospira_1')
+  #grouped_sig_genes<- grouped_sig_genes%>% filter(organisms != 'Thalassospira_1')
+  grouped_sig_genes
+  
+  grouped_sig_genes$updated_COG_name <- fct_rev(grouped_sig_genes$updated_COG_name)
+  grouped_sig_genes$treatment = factor(grouped_sig_genes$treatment, levels=c('Marinobacter','Alteromonas','Thalassospira','Pseudohoeflea','Community'))
+  dot_plot<- ggplot(grouped_sig_genes, aes(x = treatment, y = updated_COG_name, size=counts,color = updated_COG_name)) +
+    geom_point(show.legend = TRUE) +
+    scale_size_continuous(range = c(3, 20)) +
+    theme_classic()+
+    theme(
+      #axis.text.x = element_text(family = "Helvetica",color='black',size=16),
+      axis.text.x = element_text(family = "Helvetica",color='black',size=16,angle = 90,hjust=0.9,vjust=0.5),
+      #axis.text.x = element_blank(),
+      axis.text.y = element_text(family = "Helvetica",color='black',size=16),
+      #axis.title.x = element_text(family = "Helvetica",color='black',size=22),
+      axis.title.x = element_blank(),
+      #axis.title.y = element_text(family = "Helvetica",color='black',size=16),
+      axis.title.y = element_blank(),
+      strip.text = element_text(family = "Helvetica",color='black',size=16),
+      legend.text = element_text(family = "Helvetica",size = 16),
+      legend.title = element_text(family = "Helvetica",size = 16),
+      panel.border=element_blank(),
+      panel.background = element_rect(colour = "black", size=1),
+      legend.position='right')+
+    guides(size = guide_legend(title='number of significant genes',override.aes = list(color = "black"))) +
+    #scale_color_manual(values = cog_colors)
+    facet_grid(cols=vars(day),space="free")+
+    #facet_grid(cols=vars(day),space="free")+
+    scale_color_manual(values = cog_colors,guide='none')
+  
+  dot_plot
+
+  return(dot_plot)
+  
+}
+
+##### 6. Visualize Dot Plot for Hets #####
+graph_overview_dotplot_hets <- function(long_df,new_organism,annotation_file,cog_file) {
+  # Load Input Files #
+  annotations <- read.csv(file = annotation_file,sep = '\t')
+  annotations<- annotations%>% filter(organism == new_organism)
+  cog_key <- read.csv(file = cog_file,sep = '\t')
+  rownames(annotations) <- annotations$ID
+  annotations$em_COG_cat <- str_replace_all(annotations$em_COG_cat, "None", "-")
+  annotations <- annotations %>%
+    mutate(em_COG_cat = strsplit(as.character(em_COG_cat), "")) %>%
+    unnest(em_COG_cat) %>%
+    as.data.frame()
+  
+  
+
+  # Obtain Merged Annotation File #
+  merged_annotations <- merge(annotations, cog_key, by = "em_COG_cat", all.x = TRUE)
+  merged_sig_annotations <- merge(merged_annotations, long_df, by = "ID")
+  merged_sig_annotations<- merged_sig_annotations%>% filter(significance == 'significant')
+  merged_sig_annotations
+
+  # Overview Counts #
+  grouped_sig_genes <- merged_sig_annotations %>%
+    dplyr::group_by(treatment,updated_COG_name,day) %>%
+    dplyr::summarise(counts = n(),
+              .groups = 'drop') %>%
+    as.data.frame()
+  #grouped_sig_genes<- grouped_sig_genes%>% filter(organisms != 'thalassospira_1')
+  #grouped_sig_genes<- grouped_sig_genes%>% filter(organisms != 'Thalassospira_1')
+  grouped_sig_genes
+  
+  grouped_sig_genes$updated_COG_name <- fct_rev(grouped_sig_genes$updated_COG_name)
+  #grouped_sig_genes$treatment = factor(grouped_sig_genes$treatment, levels=c('Marinobacter','Alteromonas','Thalassospira','Pseudohoeflea','Community'))
+  dot_plot<- ggplot(grouped_sig_genes, aes(x = day, y = updated_COG_name, size=counts,color = updated_COG_name)) +
+    geom_point(show.legend = TRUE) +
+    scale_size_continuous(range = c(3, 20)) +
+    theme_classic()+
+    theme(
+      axis.text.x = element_text(family = "Helvetica",color='black',size=16),
+      #axis.text.x = element_text(family = "Helvetica",color='black',size=16,angle = 90,hjust=0.9,vjust=0.5),
+      #axis.text.x = element_blank(),
+      axis.text.y = element_text(family = "Helvetica",color='black',size=16),
+      #axis.title.x = element_text(family = "Helvetica",color='black',size=22),
+      axis.title.x = element_blank(),
+      #axis.title.y = element_text(family = "Helvetica",color='black',size=16),
+      axis.title.y = element_blank(),
+      strip.text = element_text(family = "Helvetica",color='black',size=16),
+      legend.text = element_text(family = "Helvetica",size = 16),
+      legend.title = element_text(family = "Helvetica",size = 16),
+      panel.border=element_blank(),
+      panel.background = element_rect(colour = "black", size=1),
+      legend.position='right')+
+    guides(size = guide_legend(title='number of significant genes',override.aes = list(color = "black"))) +
+    #scale_color_manual(values = cog_colors)
+    #facet_grid(cols=vars(day),space="free")+
+    #facet_grid(cols=vars(day),space="free")+
+    scale_color_manual(values = cog_colors,guide='none')
+  
+  dot_plot
+
+  return(dot_plot)
+  
+}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+##### 4a. Analyzing Signficant Genes for Pro
+```{r,fig.width=16, fig.height=8}
+
+##### 1. Run Preprocessing Step #####
+# Define Input Files and Variables #
+input_gene_table_file_pro <- "/Users/jamesmullet/comm_dyn_pro_overview_gene_table.csv"
+#input_gene_table_file_hets <- "/Users/jamesmullet/comm_dyn_het_overview_gene_table.csv"
+experiment_day <- "2"
+new_organism <- "MED4"
+#new_organism <- "marinobacter"
+#new_organism <- "MED4"
+#new_organism <- "MED4"
+
+
+# Run function command #
+data_processing_output_pro <-prepare_heatmap_dfs_pro(input_gene_table_file_pro,experiment_day,new_organism)
+heatmap_input_pro <- data_processing_output_pro$transposed_df
+long_df_pro <- data_processing_output_pro$long_df
+#long_df_pro
+#heatmap_input_pro
+
+##### 2. Generate Heatmaps and Gene Clusters #####
+# Define number of clusters #
+num_clusters <- 2
+
+# Run function command #
+heatmap_output_pro <-generate_heatmaps(heatmap_input_pro,num_clusters)
+updated_heatmap_pro <- heatmap_output_pro$updated_heatmap
+gene_clusters_pro <- heatmap_output_pro$gene_clusters
+#gene_clusters_pro
+updated_heatmap_pro
+
+##### 3. Extract Gene Cluster Information #####
+# Define Input Files #
+annotation_file <- '/Users/jamesmullet/annotations.tsv'
+cog_file <- '/Users/jamesmullet/cog_key.txt'
+
+# Extract Cluster Outputs #
+cluster_output_pro <-extract_cluster_information(gene_clusters_pro,num_clusters,annotation_file,cog_file,new_organism)
+#cluster_output_pro
+
+##### 4. Graph Overview #####
+
+cluster_colors <- c(`Cluster 1`= '#bf87fd',`Cluster 2`= '#900072',`Cluster 3`= '#66a557',
+                    `Cluster 4`= '#ce595f',`Cluster 5`= '#7485c8',`Cluster 6`= '#bc8b3c',
+                    `Cluster 7`= '#cb65a0',`Cluster 8`= '#47b19b',`Cluster 9`= '#725ac2')
+
+# Extract Cluster Outputs #
+bar_chart_pro <-graph_overview_bar_chart(cluster_output_pro,cluster_colors)
+bar_chart_pro
+
+##### 5. Graph Overview #####
+
+cog_colors <- c(`C (Energy production and conversion)`= '#A6CEE3',
+                `D (Cell cycle control, cell division, chromosome partitioning)`= '#1F78B4',
+                `E (Amino acid transport and metabolism)`='#B2DF8A',
+                `F (Nucleotide transport and metabolism)`= '#33A02C',
+                `G (Carbohydrate transport and metabolism)`= '#FB9A99',
+                `H (Coenzyme transport and metabolism)`= '#E31A1C',
+                `I (Lipid transport and metabolism)`= '#FDBF6F',
+                `J (Translation,  ribosomal structure and biogenesis)`= '#FF7F00',
+                `K (Transcription)`= '#CAB2D6',
+                `L (Replication, recombination and repair)`= '#6A3D9A',
+                `M (Cell wall/membrane/envelope biogenesis)`= '#FFFF99',
+                `N (Cell motility)`= '#E6AB02',
+                `O (Posttranslational modification, protein turnover, chaperones)`= '#8bc5c5',
+                `P (Inorganic ion transport and metabolism)`= '#1B9E77',
+                `Q (Secondary metabolites biosynthesis, transport and catabolism)`= '#dca7c2',
+                `S (Function unknown)`='grey',
+                `T (Signal transduction mechanisms)`= '#E7298A',
+                `U (Intracellular trafficking, secretion, and vesicular transport)`= '#f2c36e',
+                `V (Defense mechanisms)`= '#A6761D')
+
+# Extract Cluster Outputs #
+dotplot_chart_pro <-graph_overview_dotplot_pro(long_df_pro,new_organism,annotation_file,cog_file)
+dotplot_chart_pro
+
+
+
+##### Save Files as SVGs #####
+# Save Heatmap #
+#Cairo(file = "/Users/jamesmullet/comm_dyn_pro_updated_heatmap_LFC_alldays_abundance.svg", type = "svg", width = 80, height = 40, units = "in", dpi = 350)
+#print(updated_heatmap_pro)  # 'final_graph' is the ggplot object
+#dev.off()
+#Cairo(file = "/Users/jamesmullet/comm_dyn_pro_updated_heatmap_LFC_day2_abundance.svg", type = "svg", width = 80, height = 40, units = "in", dpi = 350)
+#print(updated_heatmap)  # 'final_graph' is the ggplot object
+#dev.off()
+
+# Save COG Plot #
+#Cairo(file = "/Users/jamesmullet/comm_dyn_pro_overview_cog_cluster_analysis_day2.svg", type = "svg", width = 60, height = 40, units = "in", dpi = 300)
+#print(bar_chart)  # 'final_graph' is the ggplot object
+#dev.off()
+
+# Save Dotplot #
+#Cairo(file = "/Users/jamesmullet/comm_dyn_pro_cog_treatment_dotplot_comparison_day2.svg", type = "svg", width = 35, height = 35, units = "in", dpi = 200)
+#Cairo(file = "/Users/jamesmullet/comm_dyn_pro_cog_treatment_dotplot_comparison_alldays.svg", type = "svg", width = 45, height = 35, units = "in", dpi = 200)
+#print(dotplot_chart_pro)  # 'final_graph' is the ggplot object
+#dev.off()
+
+
+```
+
+
+
+
+
+##### 4b. Analyzing Signficant Genes for Hets
+```{r,fig.width=16, fig.height=8}
+
+##### 1. Run Preprocessing Step #####
+# Define Input Files and Variables #
+input_gene_table_file_hets <- "/Users/jamesmullet/comm_dyn_het_overview_gene_table.csv"
+#het_organism <- "Marinobacter"
+#het_organism <- "Alteromonas"
+#het_organism <- "Thalassospira"
+het_organism <- "Pseudohoeflea"
+
+
+# Run function command #
+data_processing_output_hets <-prepare_heatmap_dfs_hets(input_gene_table_file_hets,het_organism)
+#data_processing_output_hets
+
+heatmap_input_hets <- data_processing_output_hets$transposed_df
+long_df_hets <- data_processing_output_hets$long_df
+#long_df_hets
+#heatmap_input_hets
+
+##### 2. Generate Heatmaps and Gene Clusters #####
+# Define number of clusters #
+num_clusters <- 5
+
+# Run function command #
+heatmap_output_hets <-generate_heatmaps(heatmap_input_hets,num_clusters)
+updated_heatmap_hets <- heatmap_output_hets$updated_heatmap
+gene_clusters_hets <- heatmap_output_hets$gene_clusters
+#gene_clusters_hets
+updated_heatmap_hets
+
+#heatmap_output_hets
+
+##### 3. Extract Gene Cluster Information #####
+# Define Input Files #
+annotation_file <- '/Users/jamesmullet/annotations.tsv'
+cog_file <- '/Users/jamesmullet/cog_key.txt'
+
+# Extract Cluster Outputs #
+cluster_output_hets <-extract_cluster_information(gene_clusters_hets,num_clusters,annotation_file,cog_file,het_organism)
+#cluster_output_hets
+
+##### 4. Graph Overview #####
+
+cluster_colors <- c(`Cluster 1`= '#bf87fd',`Cluster 2`= '#900072',`Cluster 3`= '#66a557',
+                    `Cluster 4`= '#ce595f',`Cluster 5`= '#7485c8',`Cluster 6`= '#bc8b3c',
+                    `Cluster 7`= '#cb65a0',`Cluster 8`= '#47b19b',`Cluster 9`= '#725ac2')
+
+# Extract Cluster Outputs #
+bar_chart_hets <-graph_overview_bar_chart(cluster_output_hets,cluster_colors)
+bar_chart_hets
+
+##### 5. Graph Overview #####
+
+cog_colors <- c(`C (Energy production and conversion)`= '#A6CEE3',
+                `D (Cell cycle control, cell division, chromosome partitioning)`= '#1F78B4',
+                `E (Amino acid transport and metabolism)`='#B2DF8A',
+                `F (Nucleotide transport and metabolism)`= '#33A02C',
+                `G (Carbohydrate transport and metabolism)`= '#FB9A99',
+                `H (Coenzyme transport and metabolism)`= '#E31A1C',
+                `I (Lipid transport and metabolism)`= '#FDBF6F',
+                `J (Translation,  ribosomal structure and biogenesis)`= '#FF7F00',
+                `K (Transcription)`= '#CAB2D6',
+                `L (Replication, recombination and repair)`= '#6A3D9A',
+                `M (Cell wall/membrane/envelope biogenesis)`= '#FFFF99',
+                `N (Cell motility)`= '#E6AB02',
+                `O (Posttranslational modification, protein turnover, chaperones)`= '#8bc5c5',
+                `P (Inorganic ion transport and metabolism)`= '#1B9E77',
+                `Q (Secondary metabolites biosynthesis, transport and catabolism)`= '#dca7c2',
+                `S (Function unknown)`='grey',
+                `T (Signal transduction mechanisms)`= '#E7298A',
+                `U (Intracellular trafficking, secretion, and vesicular transport)`= '#f2c36e',
+                `V (Defense mechanisms)`= '#A6761D')
+
+# Extract Cluster Outputs #
+dotplot_chart_hets <-graph_overview_dotplot_hets(long_df_hets,het_organism,annotation_file,cog_file)
+dotplot_chart_hets
+
+
+#Cairo(file = "/Users/jamesmullet/comm_dyn_marinobacter_updated_heatmap_LFC_abundance.svg", type = "svg", width = 80, height = 40, units = "in", dpi = 350)
+#Cairo(file = "/Users/jamesmullet/comm_dyn_alteromonas_updated_heatmap_LFC_abundance.svg", type = "svg", width = 80, height = 40, units = "in", dpi = 350)
+#Cairo(file = "/Users/jamesmullet/comm_dyn_thalassospira_updated_heatmap_LFC_abundance.svg", type = "svg", width = 80, height = 40, units = "in", dpi = 350)
+#Cairo(file = "/Users/jamesmullet/comm_dyn_pseudohoeflea_updated_heatmap_LFC_abundance.svg", type = "svg", width = 80, height = 40, units = "in", dpi = 350)
+#print(updated_heatmap_hets)  # 'final_graph' is the ggplot object
+#dev.off()
+
+#Cairo(file = "/Users/jamesmullet/comm_dyn_pseudohoeflea_overview_cog_cluster_analysis.svg", type = "svg", width = 60, height = 40, units = "in", dpi = 300)
+#print(bar_chart)  # 'final_graph' is the ggplot object
+#dev.off()
+
+
+#Cairo(file = "/Users/jamesmullet/comm_dyn_marinobacter_cog_treatment_dotplot_comparison.svg", type = "svg", width = 35, height = 35, units = "in", dpi = 200)
+#Cairo(file = "/Users/jamesmullet/comm_dyn_alteromonas_cog_treatment_dotplot_comparison.svg", type = "svg", width = 35, height = 35, units = "in", dpi = 200)
+#Cairo(file = "/Users/jamesmullet/comm_dyn_pseudohoeflea_cog_treatment_dotplot_comparison.svg", type = "svg", width = 35, height = 35, units = "in", dpi = 200)
+#Cairo(file = "/Users/jamesmullet/comm_dyn_thalassospira_cog_treatment_dotplot_comparison.svg", type = "svg", width = 35, height = 35, units = "in", dpi = 200)
+#print(dotplot_chart_hets)  # 'final_graph' is the ggplot object
+#dev.off()
+
+
+
+#gene_clusters,num_clusters,annotation_file,cog_file,new_organism
+
+
+
+
+```
+
+
+
+##### 5. Define Functions for ClusterProfiler Analysis
+```{r}
+
+##### 3. Extract Gene Cluster Information #####
+cluster_profiler <- function(cluster_output,new_organism,category_show) {
+  subsetted_KEGG_pathway <- subset(cluster_output, select = c(em_KEGG_ko,cluster))
+  subsetted_KEGG_pathway$em_KEGG_ko <- str_replace_all(subsetted_KEGG_pathway$em_KEGG_ko, "ko:", "")
+  #subsetted_KEGG_pathway<- subsetted_KEGG_pathway%>% filter(updated_COG_name == 'C (Energy production and conversion)')
+  #new_organism<-1
+  # Keep All strings for KEGGs #
+  subsetted_KEGG_pathway <- subsetted_KEGG_pathway %>%
+    mutate(em_KEGG_ko = strsplit(as.character(em_KEGG_ko), ",")) %>%
+    unnest(em_KEGG_ko) %>%
+    as.data.frame()
+
+  # Keep only first KEGG #
+  #subsetted_KEGG_pathway <- subsetted_KEGG_pathway %>%
+  #  separate(em_KEGG_ko, into = c("em_KEGG_ko"), sep = ",", remove = TRUE)
+  cluster_ko_list <- split(subsetted_KEGG_pathway$em_KEGG_ko, subsetted_KEGG_pathway$cluster)
+  cluster_ko_list
+
+  # You can now use this list in compareCluster
+  gene_enrich_result <- compareCluster(geneClusters = cluster_ko_list,fun = "enrichKEGG",organism = "ko")
+  
+  # Visualize the result
+  gene_cluster_enrichment_analysis_plot <- dotplot(gene_enrich_result,showCategory = category_show, label_format = 60) +
+    #dotplot(gene_enrich_result, facet = 'intersect', showCategory = 25, label_format = 60,facet = 'intersect',split = "intersect") +
+    theme_classic()+
+    ggtitle(new_organism) +
+    theme(
+      axis.text.x = element_text(family = "Helvetica",color='black',size=16),
+      #axis.text.x = element_text(family = "Helvetica",color='black',size=16,angle = 90,hjust=0.9,vjust=0.5),
+      #axis.text.x = element_blank(),
+      axis.text.y = element_text(family = "Helvetica",color='black',size=16),
+      #axis.title.x = element_text(family = "Helvetica",color='black',size=22),
+      axis.title.x = element_blank(),
+      plot.title = element_text(hjust = 0.5),
+      axis.title.y = element_text(family = "Helvetica",color='black',size=16),
+      strip.text = element_text(family = "Helvetica",color='black',size=16),
+      legend.text = element_text(family = "Helvetica",size = 16),
+      legend.title = element_text(family = "Helvetica",size = 16),
+      panel.border=element_blank(),
+      panel.background = element_rect(colour = "black", size=1),
+      legend.position='right')
+  return(gene_cluster_enrichment_analysis_plot)
+}
+
+
+```
+
+##### 5. ClusterProfiler - Gene Enrichment Analysis
+```{r,fig.width=10, fig.height=12}
+
+##### 1. Cluster Profiler for Pro#####
+temp_title_pro <- "Functional enrichment of gene clusters for"
+plot_title_pro <- paste(temp_title_pro, new_organism)
+category_show_pro = 25
+cluster_profiler_output_pro <- cluster_profiler(cluster_output_pro,plot_title_pro,category_show_pro)
+cluster_profiler_output_pro
+
+##### 2. Cluster Profiler for Hets #####
+#"Functional enrichment of clusters"
+temp_title_hets <- "Functional enrichment of gene clusters for"
+plot_title_hets <- paste(temp_title_hets, het_organism)
+category_show_hets = 25
+cluster_profiler_output_hets <- cluster_profiler(cluster_output_hets,plot_title_hets,category_show_hets)
+cluster_profiler_output_hets
+
+#Cairo(file = "/Users/jamesmullet/comm_dyn_pro_gene_enrichment_analysis_day2.pdf", type = "pdf", width = 15, height = 18, units = "in", dpi = 100)
+#print(cluster_profiler_output_pro)
+#dev.off()
+
+#Cairo(file = "/Users/jamesmullet/comm_dyn_marinobacter_gene_enrichment_analysis.pdf", type = "pdf", width = 18, height = 18, units = "in", dpi = 100)
+#Cairo(file = "/Users/jamesmullet/comm_dyn_alteromonas_gene_enrichment_analysis.pdf", type = "pdf", width = 18, height = 18, units = "in", dpi = 100)
+#Cairo(file = "/Users/jamesmullet/comm_dyn_pseudohoeflea_gene_enrichment_analysis.pdf", type = "pdf", width = 14, height = 18, units = "in", dpi = 100)
+#Cairo(file = "/Users/jamesmullet/comm_dyn_thalassospira_gene_enrichment_analysis.pdf", type = "pdf", width = 18, height = 18, units = "in", dpi = 100)
+#print(cluster_profiler_output_hets)
+#dev.off()
+
+
+```
