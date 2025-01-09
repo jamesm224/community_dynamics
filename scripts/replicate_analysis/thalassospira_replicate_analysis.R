@@ -3,6 +3,7 @@ library(ggplot2)
 library(ggrepel)
 library(dplyr)
 library(tidyr)
+library(Cairo)
 
 ##### 2. Create Function for Volcano Plots
 ##### 1. Generate Heatmaps on Input Data for Comparison #####
