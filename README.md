@@ -35,11 +35,11 @@ Citation [Blank]
     - Visualize abundance of reads using bowtie2
     - Visualize abundance of reads corrected by estimated extraction efficiency
 4. Process the RNASeq data. The remainder of Data Analysis was performed in R.
-  - 1. Process raw data to obtain edgeR data.
+  - Process raw data to obtain edgeR data.
     - Relative read counts were used for Differential Expression Analysis
     - Includes ClusterProfiler Pathway Enrichement Analysis
-  - 2. Analyze Differential Expression Analysis results for RNASeq data
+  - Analyze Differential Expression Analysis results for RNASeq data
     - Includes heatmaps, pathway plots, and LFC analysis
-  - 3. Analyze the absolute count RNASeq data
+  - Analyze the absolute count RNASeq data
     - Includes the conversion of relative to absolute count data
     - Incorporates a customizable script for generating gene diagrams for all desired KEGG pathways
