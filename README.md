@@ -8,9 +8,9 @@ Here is the code associated with this project. It includes all of the code to re
 
 Citation [Blank]
 
-## Table of Contents
-* Overall Structure
-* 
+## File Structure
+* bin
+* other folders
 
 ## Reproducing Data Analysis
 1. Download raw data from NCBI (BioProject: )
@@ -18,20 +18,28 @@ Citation [Blank]
   - The following Github link was used: https://github.com/nhinvo/rnaseq-absolute-pipeline
   - The pipeline utilizes the following packages:
     - Snakemake
-  -   bbtools
-  -   bowtie2
-      d. HTSeq
-      e. Python
+    - bbtools
+    - bowtie2
+    - HTSeq
+    - Python
 3. Process metagenomic data using bowtie and read map to the known reference genomes
-  - Marinobacter ()
-  - Thalassospira ()
-  - Alteromonas ()
-  - Pseudohoeflea ()
-  - MED4 () 
-  - Thermus Thermophilus ()
-4. Process the RNASeq data using edgeR. The remainder of Data Analysis was performed in R.
-  - All code is located here
-
-## Packages and Programs Used
-
-
+  - Genomes used in this study
+    - Marinobacter ()
+    - Thalassospira ()
+    - Alteromonas ()
+    - Pseudohoeflea ()
+    - MED4 () 
+    - Thermus Thermophilus ()
+  - Scripts used in data analysis ()
+    - Contain QC plots, comparison between FCM and metagenomic data
+    - Visualize abundance of reads using bowtie2
+    - Visualize abundance of reads corrected by estimated extraction efficiency
+4. Process the RNASeq data. The remainder of Data Analysis was performed in R.
+  - 1. Process raw data to obtain edgeR data.
+    - Relative read counts were used for Differential Expression Analysis
+    - Includes ClusterProfiler Pathway Enrichement Analysis
+  - 2. Analyze Differential Expression Analysis results for RNASeq data
+    - Includes heatmaps, pathway plots, and LFC analysis
+  - 3. Analyze the absolute count RNASeq data
+    - Includes the conversion of relative to absolute count data
+    - Incorporates a customizable script for generating gene diagrams for all desired KEGG pathways
