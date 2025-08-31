@@ -17,9 +17,9 @@ Citation [Blank]
 2. Process RNA Seq data through a series of scripts to process RNASeq
   - The following Github link was used: https://github.com/nhinvo/rnaseq-absolute-pipeline
   - The pipeline utilizes the following packages:
-      a. Snakemake
-      b. bbtools
-      c. bowtie2
+  -   Snakemake
+  -   bbtools
+  -   bowtie2
       d. HTSeq
       e. Python
 3. Process metagenomic data using bowtie and read map to the known reference genomes
