@@ -17,7 +17,7 @@ Citation [Blank]
 2. Process RNA Seq data through a series of scripts to process RNASeq
   - The following Github link was used: https://github.com/nhinvo/rnaseq-absolute-pipeline
   - The pipeline utilizes the following packages:
-  -   Snakemake
+    - Snakemake
   -   bbtools
   -   bowtie2
       d. HTSeq
