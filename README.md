@@ -1,5 +1,18 @@
-# Community Dynamics
+# Community Dynamics Working Title
 
-Here is the code for our paper. We wanted our code to be reproducible and easy to replicate. If you have any further questions about our scripts, please reach out to Christine Ziegler or James Mullet.
+## Introduction
 
+Here is the code associated with this project. It includes all of the code to reproduce all bioinformatic analysis performed in this paper. It contains code for RNASeq Analysis, metagenomic, metatranscriptomic, and additional analysis.
+
+## Publication
+
+Citation [Blank]
+
+## Table of Contents
+* Overall Structure
+* 
+
+## Reproducing Data Analysis
+
+## Packages and Programs Used
 
