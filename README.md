@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Here is the code associated with this project. It includes all of the code to reproduce all bioinformatic analysis performed in this paper. It contains code for RNASeq Analysis, metagenomic, metatranscriptomic, and additional analysis.
+Here is the code associated with this project. It includes all of the code to reproduce all bioinformatic analysis performed in this paper. It contains code for genome assembly, RNASeq analysis, metagenomic, metatranscriptomic, and additional analysis.
 
 ## Publication
 
