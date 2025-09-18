@@ -1,0 +1,82 @@
+from pathlib import Path
+import shutil
+import pandas as pd
+
+SAMPLE_TABLE = pd.read_csv(config["input"]["sample table"], index_col="sample", sep="\t")
+SAMPLE_TABLE.index = SAMPLE_TABLE.index.map(str)  # convert index (samples) to string 
+SAMPLES = SAMPLE_TABLE.index.values  # list of samples
+
+scratch_dir = Path(config["scratch directory"])
+results_dir = Path(config["results directory"])
+
+scratch_dict = {
+    "done_files": scratch_dir / "done_files",
+
+    # trimming
+    "trimmed_reads": scratch_dir / "trimmed_reads",
+
+    # mapping 
+    "genome_index_parent": scratch_dir / "genome_index",
+    "concat_gff": {
+        "concat_gff_file": scratch_dir
+        / "concat_gff"
+        / "concat_gff.gff",
+        "concat_gff_mod_file": scratch_dir
+        / "concat_gff"
+        / "concat_gff_mod.gff",
+    },
+    "concat_genome": {
+        "concat_genome_file": scratch_dir
+        / "concat_genome"
+        / "concat_genome.fna",
+        "concat_genome_done": scratch_dir
+        / "concat_genome"
+        / "indexed.done",
+    },
+    "mapped_reads": scratch_dir / "mapped_reads",
+    "mapping_coverage": scratch_dir / "mapping_coverage",
+
+    # HTseq - feature counting 
+    "feature_count": scratch_dir / "HTseq",
+}
+
+results_dict = {
+    "bio_db_ref": results_dir / "tables" / "bio_db_ref.tsv",
+    "annotations": results_dir / "tables" / "annotations.tsv",
+    "mapping_metadata": results_dir / "tables" / "mapping_metadata.tsv",
+
+    # Raw uncorrected mapping counts - before internal standard correction
+    "uncorrected_counts": results_dir / "tables" / "raw_counts_uncorrected.tsv",
+    "raw_counts_w_annotations": results_dir / "tables" / "raw_counts_uncorrected_w_annotations.tsv",
+    "organism_occurance": results_dir / "tables" / "organism_occurance_uncorrected.tsv",
+    "gene_sparsity": results_dir / "tables" / "gene_sparsity_uncorrected.tsv",
+
+    # Internal Standard analysis results: 
+    "all_standard_metadata": results_dir / "internal_standard_analysis" / "tables" / "all_standard_metadata.tsv", 
+    "filtered_standard_metadata": results_dir / "internal_standard_analysis" / "tables" / "filtered_standard_metadata.tsv", 
+    "efficiency_slopes_intercepts": results_dir / "internal_standard_analysis" / "tables" / "efficiency_slopes_intercepts.tsv", 
+    "IS_analysis_plot_outdir": results_dir / "internal_standard_analysis" / "plots", 
+
+    # Absolute (corrected) count data (after internal standard count correction)
+    "absolute_gene_count_per_cell": results_dir / "absolute_read_count" / "gene_count_per_cell.tsv", 
+    "corrected_transcript_count": results_dir / "absolute_read_count" / "corrected_transcript_count.tsv", 
+    "summary_back_calculate_counts": results_dir / "absolute_read_count" / "summary_back_calculate_counts.tsv", 
+}
+
+rule all:
+    input:
+        results_dict['absolute_gene_count_per_cell'],
+
+include: "rules/run_trim.smk"
+
+include: "rules/map_reads_bowtie2.smk"
+
+include: "rules/gff_tools.smk"
+
+include: "rules/counting_features.smk"
+
+include: "rules/uncorrected_count_summary.smk"
+
+include: "rules/samtools.smk"
+
+include: "rules/internal_standard_correction.smk"

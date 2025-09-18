@@ -1,0 +1,28 @@
+
+rule run_trim_PE:
+    input:
+        r1 = lambda wildcards: SAMPLE_TABLE.loc[wildcards.sample, 'forward read'],
+        r2 = lambda wildcards: SAMPLE_TABLE.loc[wildcards.sample, 'reverse read'],
+        ref = Path(config["input"]["adapter_file"]),
+    output:
+        o1 = scratch_dict["trimmed_reads"] / "{sample}_1_trimmed.fastq.gz",
+        o2 = scratch_dict["trimmed_reads"] / "{sample}_2_trimmed.fastq.gz",
+    conda:
+        "../envs/bbtools.yaml"
+    shell:
+        "bbduk.sh threads={resources.cpus_per_task} "
+        "in1={input.r1} in2={input.r2} "
+        "out1={output.o1} out2={output.o2} "
+        "minlen=25 qtrim=rl trimq=10 maq=20 "
+        "ref={input.ref} ktrim=r k=23 mink=11 hdist=1"
+
+rule unzip_gz:
+    input:
+        scratch_dict["trimmed_reads"] / "{anything}.fastq.gz",
+    output:
+        scratch_dict["trimmed_reads"] / "{anything}.fastq",
+    conda:
+        "../envs/gzip.yaml"
+    shell:
+        "gzip -d {input}"
+
