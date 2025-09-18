@@ -90,11 +90,6 @@ plot_metaG_FCM_comparison<- function(fcm_counts_file) {
           legend.position='top')+
     xlab("")+
     ylab("relative abundance of heterotrophs")
-    #facet_grid(cols=vars(experiment_day),scales="free",space="free")
-    #scale_color_manual(values = alpha(c("#ff3145","#eb91e3","#4f2c7f",
-    #                                    "#007bc0","#00e674","#ff7f00","#cbbbc2")))+
-    #scale_y_log10(limits = c(50000, 100000000))+
-    #annotation_logticks(sides="l")
   return(fcm_scatter)
 }
 
@@ -102,19 +97,22 @@ plot_metaG_FCM_comparison<- function(fcm_counts_file) {
 ##### 2. Generate QC Plots
 ```{r,fig.width=10, fig.height=6}
 ##### Define Input Files #####
-input_dna_reads_file='/Users/jamesmullet/dna_community_dynamics_data.csv'
-dna_standards_file='/Users/jamesmullet/dna_standard_reads_mapped.csv'
-fcm_counts_file = '/Users/jamesmullet/fcm_metaG_comparison.csv'
+input_dna_reads_file='dna_community_dynamics_data.csv'
+dna_standards_file='dna_standard_reads_mapped.csv'
+fcm_counts_file = 'fcm_metaG_comparison.csv'
 
 ##### 1. Generate Total DNA Reads Plot #####
+##### QC for Sequencing Data #####
 dna_counts_plot<- plot_total_dna_reads(input_dna_reads_file)
 dna_counts_plot
 
 ##### Generate Number of Recovered DNA Standards #####
+##### QC for Sequencing Data #####
 internal_standard_plot <- plot_dna_standards(dna_standards_file)
 internal_standard_plot
 
 ##### FCM vs metaG Comparison #####
+##### QC for comparing heterotroph vs Pro Reads - without extraction efficiency #####
 fcm_metaG_plot <- plot_metaG_FCM_comparison(fcm_counts_file)
 fcm_metaG_plot
 ```
@@ -128,8 +126,6 @@ plot_read_map_results<- function(read_map_results_file,cluster_colors) {
   input_read_mapping <- input_read_mapping%>% filter(experiment_name != 'Thermus_standard')
   metaG_plot<- ggplot(input_read_mapping, aes(x=replicate,y=`absolute_counts`,fill=experiment_name)) + 
     geom_bar(position="stack", stat="identity",alpha=0.8,color='black')+
-    #geom_bar(position="fill", stat="identity",alpha=0.9,color='black')+
-    #geom_bar(stat="identity",position = 'dodge',color='black')+
     theme_classic()+
     theme(axis.text.x = element_text(family = "Helvetica",color='black',size=16),
           axis.text.y = element_text(family = "Helvetica",color='black',size=16),
@@ -141,11 +137,8 @@ plot_read_map_results<- function(read_map_results_file,cluster_colors) {
           panel.border=element_blank(),
           legend.position='right')+
     xlab("")+
-    #ylab("relative abundance (%)")+
     ylab("absolute genome equivalent counts")+
     scale_fill_manual(values = cluster_colors,guide = guide_legend(ncol = 1, byrow = TRUE))+
-    #scale_fill_manual(values = alpha(c("#ff3145","#eb91e3","#4f2c7f","#007bc0","#00e674","#ff7f00","#cbbbc2")))+
-    #scale_fill_lancet()+
     facet_grid(cols=vars(sampling_day),scales="free",space="free")+
     #geom_hline(yintercept = 1, color = "black", linetype = "solid", size = 1) +
     scale_y_continuous(limits = c(0, 750000000),expand = c(0, 0))
@@ -195,15 +188,18 @@ plot_read_map_results_lineplot<- function(read_map_results_file,cluster_colors) 
 lineplot_extraction_efficiency<- function(read_map_results_file,cluster_colors) {
   input_read_mapping <- read.csv(file = read_map_results_file)
   
+  # Obtain the FCM Counts from Day 0 #
   extract_input <- input_read_mapping%>% filter(sampling_day == '0')
   extract_input$initial_FCM_cell_count_added <- as.numeric(extract_input$initial_FCM_cell_count_added)
+  
+  # Calculate extraction efficiency on Day 0 #
   extract_input$extraction_efficiency <- (extract_input$genome_equivalents / extract_input$initial_FCM_cell_count_added)
   
-  
+  # Obtain the average extraction efficiency per organism during the experiment #
   averaged_extraction_efficiency <- extract_input %>%
     group_by(sampling_day,experiment_name) %>%
     summarise(mean_extraction_efficiency = mean(extraction_efficiency),
-              se_y = sqrt(var(extraction_efficiency) / n()),
+              #se_y = sqrt(var(extraction_efficiency) / n()),
               .groups = 'drop') %>%
     as.data.frame()
   mini_averaged_extraction_efficiency <- subset(averaged_extraction_efficiency, select = c(experiment_name,mean_extraction_efficiency))
@@ -214,25 +210,26 @@ lineplot_extraction_efficiency<- function(read_map_results_file,cluster_colors) 
   merged_efficiency_df <- merged_efficiency_df %>%
     mutate(corrected_genome_recovery = genome_recovery / genome_recovery[sampling_day == '0'])
   
-  merged_efficiency_df$corrected_extraction_efficiency <- (merged_efficiency_df$mean_extraction_efficiency * merged_efficiency_df$corrected_genome_recovery)
-  
   merged_efficiency_df$extraction_efficiency_corrected_counts <- (merged_efficiency_df$genome_equivalents / merged_efficiency_df$corrected_extraction_efficiency)
   
     
   averaged_data <- merged_efficiency_df %>%
     group_by(sampling_day,experiment_name,groupings) %>%
     summarise(mean_absolute_counts = mean(extraction_efficiency_corrected_counts),
-              se_y = sqrt(var(extraction_efficiency_corrected_counts) / n()),
+              #se_y = sqrt(var(extraction_efficiency_corrected_counts) / n()),
               .groups = 'drop') %>%
     as.data.frame()
   
   merged_efficiency_df <- merged_efficiency_df%>% filter(experiment_name != 'Thermus_standard')
 
+  # Plot extraction efficiency corrected data #
   scatterplot_version <- merged_efficiency_df %>%
       tidyplot(x=sampling_day,y=extraction_efficiency_corrected_counts,color=experiment_name,dodge_width = 0)%>%
       add_mean_line(linewidth=0.6) %>%
       add_mean_dot(size=2) %>%
-      add_sem_errorbar(dodge_width = NULL,width=0.6,linewidth=0.4) %>%
+      #add_barstack_relative()%>%
+      #add_mean_dot(size=2) %>%
+      #add_sem_errorbar(dodge_width = NULL,width=0.6,linewidth=0.4) %>%
       adjust_y_axis(title = "Estimated Cell Count",transform = "log10") %>%
       #adjust_y_axis(title = "Estimated Cell Count") %>%
       adjust_x_axis(title = "Time (Days)") %>%
@@ -249,13 +246,13 @@ lineplot_extraction_efficiency<- function(read_map_results_file,cluster_colors) 
 ##### 3. Generate Read Mapping Plots
 ```{r}
 ##### Define Input Files #####
-read_map_results_file='/Users/jamesmullet/community_dynamics_data_readmap_normalized_absolute_counts.csv'
+read_map_results_file='community_dynamics_data_readmap_normalized_absolute_counts.csv'
 input_read_mapping <- read.csv(file = read_map_results_file)
+input_read_mapping
 
 ##### Define Color Scheme #####
-cluster_colors <- c(`1904_Alteromonas`= '#ff3145',`1907_Thalassospira`= '#eb91e3',`1940_Pseudohoeflea`='#4f2c7f',
-                    `1943_Marinobacter`= '#007bc0',`Thermus_standard`= '#ff7f00',`MED4`='#00e674')
-
+cluster_colors <- c(`1904_Alteromonas`= '#c63c26',`1907_Thalassospira`= '#C17DA5',`1940_Pseudohoeflea`='#EAC043',
+                    `1943_Marinobacter`= '#59a9b7',`Thermus_standard`= '#ff7f00',`MED4`='#9ab54d')
 
 ##### 1. Generate Total DNA Reads Plot #####
 read_map_plot<- plot_read_map_results(read_map_results_file,cluster_colors)
@@ -270,15 +267,15 @@ extraction_efficiency_corrected_lineplot<- lineplot_extraction_efficiency(read_m
 extraction_efficiency_corrected_lineplot
 
 ##### Save Files as SVGs #####
-#Cairo(file = "/Users/jamesmullet/comm_dyn_metaG_overview_barchart.svg", type = "svg", width = 40, height = 20, units = "in", dpi = 250)
+#Cairo(file = "comm_dyn_metaG_overview_barchart_v2.svg", type = "svg", width = 40, height = 20, units = "in", dpi = 250)
 #print(read_map_plot)  # 'final_graph' is the ggplot object
 #dev.off()
 
-#Cairo(file = "/Users/jamesmullet/comm_dyn_metaG_overview_lineplot.svg", type = "svg", width = 40, height = 20, units = "in", dpi = 250)
+#Cairo(file = "comm_dyn_metaG_overview_lineplot.svg", type = "svg", width = 40, height = 20, units = "in", dpi = 250)
 #print(read_map_lineplot)  # 'final_graph' is the ggplot object
 #dev.off()
 
-#Cairo(file = "/Users/jamesmullet/comm_dyn_metaG_extraction_efficiency.svg", type = "svg", width = 40, height = 25, units = "in", dpi = 200)
+#Cairo(file = "comm_dyn_metaG_extraction_efficiency.svg", type = "svg", width = 40, height = 25, units = "in", dpi = 200)
 #print(extraction_efficiency_plot)  # 'final_graph' is the ggplot object
 #dev.off()
 
