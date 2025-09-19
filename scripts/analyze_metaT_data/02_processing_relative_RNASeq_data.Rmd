@@ -28,23 +28,23 @@ library(RColorBrewer)
 ##### 2. Load Files
 ```{r}
 # Annotations file of all genomes #
-annotation_file <- '/Users/jamesmullet/updated_comm_dyn_annotations_v2.xlsx'
+annotation_file <- 'updated_comm_dyn_annotations_v2.xlsx'
 annotations <- read_excel(annotation_file)
 annotations
 
-cog_file <- '/Users/jamesmullet/cog_key.txt'
+cog_file <- 'cog_key.txt'
 
 small_annotations <- subset(annotations, select = c('ID','em_Preferred_name','em_desc'))
 
 # Load edgeR cleaned up output files #
 # Pro Gene Expression: Control vs Monoxenic # 
-input_gene_table_file_pro <- "/Users/jamesmullet/comm_dyn_edgeR_Pro_v2_overview_gene_table.csv"
+input_gene_table_file_pro <- "comm_dyn_edgeR_Pro_v2_overview_gene_table.csv"
 
 # Pro Gene Expression: Monoxenic vs Community # 
-input_gene_table_file_pro_comm <- "/Users/jamesmullet/comm_dyn_edgeR_pro_comm_normalized_overview_gene_table_v2.csv"
+input_gene_table_file_pro_comm <- "comm_dyn_edgeR_pro_comm_normalized_overview_gene_table_v2.csv"
 
 # Het Gene Expression: Community vs Monoxenic # 
-input_gene_table_file_hets <- "/Users/jamesmullet/comm_dyn_het_overview_gene_table_v2.csv"
+input_gene_table_file_hets <- "comm_dyn_het_overview_gene_table_v2.csv"
 
 # KEGG Gene Key #
 kegg_gene_key <- 'comm_dyn_kegg_gene_key.csv'
