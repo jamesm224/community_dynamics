@@ -4,7 +4,7 @@
 Here is the code associated with this project. It includes all of the code to reproduce all bioinformatic analysis performed in this paper. It contains code for genome assembly, RNASeq analysis, metagenomic, metatranscriptomic, and additional analysis.
 
 ## Publication
-1. Ziegler1, C.A., Mullet, J.I., Coe, A., Vo, N.N., Salcedo, E., Arrigan, D.M., Parker, S.M., Chisholm, S.W. (2025). The shared and distinct roles of Prochlorococcus and co-occurring heterotrophs in regulating community fitness, as revealed by synthetic communities. (In Preparation).
+1. Ziegler, C.A., Mullet, J.I., Coe, A., Vo, N.N., Salcedo, E., Arrigan, D.M., Parker, S.M., Chisholm, S.W. (2025). The shared and distinct roles of Prochlorococcus and co-occurring heterotrophs in regulating community fitness, as revealed by synthetic communities. (In Preparation).
 
 ## Packages 
 RNAseq Pre-processing Pipeline: 
@@ -47,7 +47,8 @@ Data Analysis: There were a few others that weren't used much but here are most 
 1. Download raw data from NCBI (BioProject: )
 
 ### Genome Assembly  
-Process PacBio long read sequencing samples through a series of scripts located in `pipelines/HIFI-genome-closing-improved` to assemble reference genomes. 
+Process PacBio long read sequencing samples through a series of scripts located in `pipelines/HIFI-genome-closing-improved` to assemble reference genomes.  
+
 **Installation**  
   - Install: samtools v1.22.1, metaFlye v2.9.5, MMseqs2 v17.b804f, GTDB v207
 
