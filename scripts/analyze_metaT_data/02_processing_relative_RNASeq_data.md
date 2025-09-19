@@ -131,7 +131,7 @@ library(RColorBrewer)
 
 ``` r
 # Annotations file of all genomes #
-annotation_file <- '/Users/jamesmullet/updated_comm_dyn_annotations_v2.xlsx'
+annotation_file <- 'updated_comm_dyn_annotations_v2.xlsx'
 annotations <- read_excel(annotation_file)
 annotations
 ```
@@ -158,19 +158,19 @@ annotations
     ## #   em_Preferred_name <chr>, em_desc <chr>, em_evalue <dbl>, …
 
 ``` r
-cog_file <- '/Users/jamesmullet/cog_key.txt'
+cog_file <- 'cog_key.txt'
 
 small_annotations <- subset(annotations, select = c('ID','em_Preferred_name','em_desc'))
 
 # Load edgeR cleaned up output files #
 # Pro Gene Expression: Control vs Monoxenic # 
-input_gene_table_file_pro <- "/Users/jamesmullet/comm_dyn_edgeR_Pro_v2_overview_gene_table.csv"
+input_gene_table_file_pro <- "comm_dyn_edgeR_Pro_v2_overview_gene_table.csv"
 
 # Pro Gene Expression: Monoxenic vs Community # 
-input_gene_table_file_pro_comm <- "/Users/jamesmullet/comm_dyn_edgeR_pro_comm_normalized_overview_gene_table_v2.csv"
+input_gene_table_file_pro_comm <- "comm_dyn_edgeR_pro_comm_normalized_overview_gene_table_v2.csv"
 
 # Het Gene Expression: Community vs Monoxenic # 
-input_gene_table_file_hets <- "/Users/jamesmullet/comm_dyn_het_overview_gene_table_v2.csv"
+input_gene_table_file_hets <- "comm_dyn_het_overview_gene_table_v2.csv"
 
 # KEGG Gene Key #
 kegg_gene_key <- 'comm_dyn_kegg_gene_key.csv'
@@ -544,7 +544,7 @@ num_clusters <- 2
 heatmap_output_pro <-generate_heatmaps(heatmap_input_pro,num_clusters)
 ```
 
-![](02_processing_relative_RNASeq_data_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->![](02_processing_relative_RNASeq_data_files/figure-gfm/unnamed-chunk-4-2.png)<!-- -->
+![](additional_files/unnamed-chunk-4-1.png)<!-- -->![](additional_files/unnamed-chunk-4-2.png)<!-- -->
 
 ``` r
 updated_heatmap_pro <- heatmap_output_pro$updated_heatmap
@@ -653,7 +653,7 @@ bar_chart_pro <-graph_overview_bar_chart(cluster_output_pro,cluster_colors)
 bar_chart_pro
 ```
 
-![](02_processing_relative_RNASeq_data_files/figure-gfm/unnamed-chunk-4-3.png)<!-- -->
+![](additional_files/unnamed-chunk-4-3.png)<!-- -->
 
 ``` r
 ##### 5. Graph Overview #####
@@ -683,7 +683,7 @@ dotplot_chart_pro <-graph_overview_dotplot_pro(long_df_pro,new_organism,annotati
 dotplot_chart_pro
 ```
 
-![](02_processing_relative_RNASeq_data_files/figure-gfm/unnamed-chunk-4-4.png)<!-- -->
+![](additional_files/unnamed-chunk-4-4.png)<!-- -->
 
 ``` r
 ##### Upset Plot #####
@@ -691,7 +691,7 @@ upset_plot_pro <- graph_upset_plot(long_df_pro)
 upset_plot_pro
 ```
 
-![](02_processing_relative_RNASeq_data_files/figure-gfm/unnamed-chunk-4-5.png)<!-- -->
+![](additional_files/unnamed-chunk-4-5.png)<!-- -->
 
 ``` r
 ##### Save Files as SVGs #####
@@ -741,7 +741,7 @@ num_clusters <- 2
 heatmap_output_pro_comm <-generate_heatmaps(heatmap_input_pro_comm,num_clusters)
 ```
 
-![](02_processing_relative_RNASeq_data_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->![](02_processing_relative_RNASeq_data_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
+![](additional_files/unnamed-chunk-5-1.png)<!-- -->![](additional_files/unnamed-chunk-5-2.png)<!-- -->
 
 ``` r
 updated_heatmap_pro_comm <- heatmap_output_pro_comm$updated_heatmap
@@ -856,7 +856,7 @@ num_clusters <- 2
 heatmap_output_hets <-generate_heatmaps(heatmap_input_hets,num_clusters)
 ```
 
-![](02_processing_relative_RNASeq_data_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->![](02_processing_relative_RNASeq_data_files/figure-gfm/unnamed-chunk-6-2.png)<!-- -->
+![](additional_files/unnamed-chunk-6-1.png)<!-- -->![](additional_files/unnamed-chunk-6-2.png)<!-- -->
 
 ``` r
 updated_heatmap_hets <- heatmap_output_hets$updated_heatmap
@@ -905,7 +905,7 @@ bar_chart_hets <-graph_overview_bar_chart(cluster_output_hets,cluster_colors)
 bar_chart_hets
 ```
 
-![](02_processing_relative_RNASeq_data_files/figure-gfm/unnamed-chunk-6-3.png)<!-- -->
+![](additional_files/unnamed-chunk-6-3.png)<!-- -->
 
 ##### 4. Pro Pathway Enrichment Analysis
 
@@ -997,4 +997,4 @@ cluster_profiler_output_pro <- cluster_profiler(cluster_output_pro,plot_title_pr
 cluster_profiler_output_pro
 ```
 
-![](02_processing_relative_RNASeq_data_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](additional_files/unnamed-chunk-7-1.png)<!-- -->
