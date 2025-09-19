@@ -1,0 +1,63 @@
+﻿Description,functional_pathway,enriched_in_axenic_pro,enriched_in_xenic_pro,enriched_in_hets
+"Glycine, serine and threonine metabolism",Amino Acid Metabolism,no,no,yes
+Histidine metabolism,Amino Acid Metabolism,no,no,no
+Lysine biosynthesis,Amino Acid Metabolism,no,no,no
+Selenocompound metabolism,Amino Acid Metabolism,no,no,no
+"Valine, leucine and isoleucine biosynthesis",Amino Acid Metabolism,no,no,yes
+"Alanine, aspartate and glutamate metabolism",Amino Acid Metabolism,no,no,yes
+Beta-alanine metabolism,Amino Acid Metabolism,no,no,yes
+Cysteine and methionine metabolism,Amino Acid Metabolism,no,no,yes
+Ethylbenzene degradation,Amino Acid Metabolism,no,no,yes
+Lysine biosynthesis,Amino Acid Metabolism,no,no,yes
+Phenylalanine metabolism,Amino Acid Metabolism,no,no,yes
+Tyrosine metabolism,Amino Acid Metabolism,no,no,yes
+D-Amino acid metabolism,Amino Acid Metabolism,,,
+"Valine, leucine and isoleucine degradation",Amino Acid Metabolism,no,no,yes
+2-Oxocarboxylic acid metabolism,Central Metabolism,no,no,no
+Butanoate metabolism,Central Metabolism,no,no,yes
+C5-Branched dibasic acid metabolism,Central Metabolism,no,no,yes
+Carbon fixation by Calvin cycle,Central Metabolism,yes,no,no
+Citrate cycle (TCA cycle),Central Metabolism,no,no,yes
+Glycolysis / Gluconeogenesis,Central Metabolism,no,no,yes
+Glyoxylate and dicarboxylate metabolism,Central Metabolism,no,no,yes
+Oxidative phosphorylation,Central Metabolism,yes,no,yes
+Pentose phosphate pathway,Central Metabolism,yes,no,yes
+Photosynthesis,Central Metabolism,yes,no,no
+Propanoate metabolism,Central Metabolism,no,no,yes
+Pyruvate metabolism,Central Metabolism,no,no,yes
+Biotin metabolism,Cofactors and Vitamins,no,yes,yes
+Folate biosynthesis,Cofactors and Vitamins,no,yes,yes
+Lipoic acid metabolism,Cofactors and Vitamins,no,no,yes
+Pantothenate and CoA biosynthesis,Cofactors and Vitamins,no,no,yes
+Porphyrin metabolism,Cofactors and Vitamins,no,yes,yes
+Thiamine metabolism,Cofactors and Vitamins,no,no,yes
+Ubiquinone and other terpenoid-quinone biosynthesis,Cofactors and Vitamins,no,yes,no
+Vitamin B6 metabolism,Cofactors and Vitamins,no,no,yes
+One carbon pool by folate,Cofactors and Vitamins,no,no,yes
+Riboflavin metabolism,Cofactors and Vitamins,no,no,yes
+Fatty acid biosynthesis,Fatty Acids,no,no,yes
+Fatty acid degradation,Fatty Acids,no,no,yes
+Fatty acid metabolism,Fatty Acids,no,no,no
+Peptidoglycan biosynthesis,Movement and Cell regulation,no,yes,yes
+Bacterial chemotaxis,Movement and Cell regulation,no,no,yes
+Bacterial secretion system,Movement and Cell regulation,no,no,no
+Biofilm formation - Escherichia coli,Movement and Cell regulation,no,no,yes
+Cell cycle - Caulobacter,Movement and Cell regulation,no,no,yes
+Flagellar assembly,Movement and Cell regulation,no,no,yes
+Protein export,Movement and Cell regulation,no,yes,yes
+Quorum sensing,Movement and Cell regulation,no,no,yes
+Streptomycin biosynthesis,Other,no,no,no
+Vancomycin resistance,Other,no,yes,no
+Sulfur metabolism,Other,no,no,yes
+Nitrogen metabolism,Other,no,yes,no
+Drug metabolism - other enzymes,Other,no,yes,no
+Longevity regulating pathway - worm,Other,no,yes,no
+DNA replication,Replication and repair,no,no,no
+Homologous recombination,Replication and repair,no,yes,no
+Mismatch repair,Replication and repair,no,yes,no
+Nucleotide metabolism,Replication and repair,no,yes,yes
+Pyrimidine metabolism,Replication and repair,no,yes,no
+RNA degradation,Replication and repair,no,yes,no
+Aminoacyl-tRNA biosynthesis,Replication and repair,no,no,no
+Ribosome,Replication and repair,yes,no,no
+Purine metabolism,Replication and repair,no,no,yes
