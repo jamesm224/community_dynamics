@@ -92,7 +92,7 @@ data_processing_output_1905_vs_1907 <-volcano_plot_thalassospira(input_gene_tabl
 data_processing_output_1905_vs_1907
 ```
 
-![](thalassospira_replicate_analysis_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](additional_files/plots/unnamed-chunk-3-1.png)<!-- -->
 
 ``` r
 #ggsave("comm_dyn_edgeR_1905_1907_analysis_volcano_plot.png", plot = data_processing_output_1905_vs_1907, width = 12, height = 8)
