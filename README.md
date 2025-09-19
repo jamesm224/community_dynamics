@@ -1,20 +1,24 @@
 # Community Dynamics Working Title
 
 ## Introduction
-
 Here is the code associated with this project. It includes all of the code to reproduce all bioinformatic analysis performed in this paper. It contains code for genome assembly, RNASeq analysis, metagenomic, metatranscriptomic, and additional analysis.
 
 ## Publication
+1. Ziegler1, C.A., Mullet, J.I., Coe, A., Vo, N.N., Salcedo, E., Arrigan, D.M., Parker, S.M., Chisholm, S.W. (2025). The shared and distinct roles of Prochlorococcus and co-occurring heterotrophs in regulating community fitness, as revealed by synthetic communities. (In Preparation).
 
-Citation [Blank]
+## Packages 
+RNAseq Pre-processing Pipeline: 
+   - Snakemake v7.32.4  
+   - bbtools v39.18
+   - bowtie2 v2.5.4
+   - HTSeq v2.0.9
+   - Python v3.12.2
 
-## Packages used:
-Pipelines: 
-   - Snakemake
-   - bbtools
-   - bowtie2
-   - HTSeq
-   - Python
+Genome Assembly Pipeline: 
+  - samtools v1.22.1
+  - metaFlye v2.9.5
+  - MMseqs2 v17.b804f
+  - GTDB v207
 
 Data Analysis: There were a few others that weren't used much but here are most of them!
    - ggplot2 v3.5.2
@@ -39,13 +43,75 @@ Data Analysis: There were a few others that weren't used much but here are most 
       - replicate analysis - Contains Thalassospira strain-level analysis
 
 ## Reproducing Data Analysis
+### Install FASTQ files from SRA 
 1. Download raw data from NCBI (BioProject: )
-   
-2. Process RNA Seq data through a series of scripts to process RNASeq (Nhi could you fill this out when you get the chance please?)
-  - The following Github link was used: https://github.com/nhinvo/rnaseq-absolute-pipeline
-  - The pipeline utilizes the following packages:
+
+### Genome Assembly  
+Process PacBio long read sequencing samples through a series of scripts located in `pipelines/HIFI-genome-closing-improved` to assemble reference genomes. 
+**Installation**  
+  - Install: samtools v1.22.1, metaFlye v2.9.5, MMseqs2 v17.b804f, GTDB v207
+
+**Setup and Run Scripts**
+  - Set up paths to output directories and input files in each script
+  - Edit resource specifications and conda package names 
+  - Run scripts to process the samples
+
+
+### RNAseq Pre-processing
+Process meta-transcriptomics samples through Snakemake pipeline located in `pipelines/rnaseq-absolute-pipeline` to obtain internal standard normalized read counts.  
+
+**Installation**  
+  - Install Snakemake v7.32.4 and Conda (or Mamba)
+
+**Set up Snakemake Pipeline**  
+  - Create samples.tsv file: 
+    - Required columns: 
+      1. "sample" - Unique sample name 
+      2. "forward read" - Absolute path to forward reads .fastq file 
+      3. "reverse read" - Absolute path to reverse reads .fastq file
+    - Optional: any additional columns with sample metadata 
+  - Create internal_standard_concentration.tsv file:
+    - Required columns: 
+      1. "standard_name" - Unique name of internal standard added. 
+          - **Important**: Column value should match with name of sequence in provided FASTA and GFF file
+      2. "standard_group" - Group that standard is in 
+      3. "concentration (ng/ul)" - Concentration of standard added 
+      4. "volume_added (ul)" - Volume of standard added 
+  - Create cell_count.tsv file:
+    - Required columns: 
+      1. "sample" - Unique sample name. Should match with "sample" column from samples.tsv	
+      2. "total_cell_count" - Count of cells in sample 
+  - Edit config.yaml file:
+    1. Edit names (yaml keys) of reference genomes and their paths
+    2. Edit path to folder to store intermediate files: "scratch directory"
+    3. Edit length of sequenced read (from fastq file): "read length"
+    4. Edit minimum number of samples a standard has to be in: "minimum standard sample"
+  - Edit profile/config.yaml file:
+    1. Edit partition name in "default-resources" - "partition"
+    2. Edit any other resources as needed 
+  - Edit run_RNAseq_SM.sbatch file: 
+    1. Edit slurm SBATCH resource specifications as needed (e.g. time, partition)
+
+**Running Snakemake pipeline**  
+  1. Run pipeline by: `sbatch run_RNAseq_SM.sbatch`
+      - Note: create logs/ folder before submitting job 
+  2. Check log files in logs/ folder 
+
+### RNAseq Post-processing
+Process the RNASeq data. The remainder of Data Analysis was performed in R.
+  - Process raw data to obtain edgeR data.
+    - Relative read counts were used for Differential Expression Analysis
+    - Includes ClusterProfiler Pathway Enrichement Analysis
       
-3. Process metagenomic data using bowtie and read map to the known reference genomes
+  - Analyze Differential Expression Analysis results for RNASeq data
+    - Includes heatmaps, pathway plots, and LFC analysis
+      
+  - Analyze the absolute count RNASeq data
+    - Includes the conversion of relative to absolute count data
+    - Incorporates a customizable script for generating gene diagrams for all desired KEGG pathways
+
+### Metagenomics Analysis   
+Process metagenomic data using bowtie and read map to the known reference genomes  
   - Genomes used in this study
     - Marinobacter ()
     - Thalassospira ()
@@ -58,15 +124,3 @@ Data Analysis: There were a few others that weren't used much but here are most 
     - Contain QC plots, comparison between FCM and metagenomic data
     - Visualize abundance of reads using bowtie2
     - Visualize abundance of reads corrected with and without estimated extraction efficiency
-      
-4. Process the RNASeq data. The remainder of Data Analysis was performed in R.
-  - Process raw data to obtain edgeR data.
-    - Relative read counts were used for Differential Expression Analysis
-    - Includes ClusterProfiler Pathway Enrichement Analysis
-      
-  - Analyze Differential Expression Analysis results for RNASeq data
-    - Includes heatmaps, pathway plots, and LFC analysis
-      
-  - Analyze the absolute count RNASeq data
-    - Includes the conversion of relative to absolute count data
-    - Incorporates a customizable script for generating gene diagrams for all desired KEGG pathways
