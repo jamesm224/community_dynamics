@@ -128,9 +128,9 @@ plot_metaG_FCM_comparison<- function(fcm_counts_file) {
 
 ``` r
 ##### Define Input Files #####
-input_dna_reads_file='/Users/jamesmullet/dna_community_dynamics_data.csv'
-dna_standards_file='/Users/jamesmullet/dna_standard_reads_mapped.csv'
-fcm_counts_file = '/Users/jamesmullet/fcm_metaG_comparison.csv'
+input_dna_reads_file='dna_community_dynamics_data.csv'
+dna_standards_file='dna_standard_reads_mapped.csv'
+fcm_counts_file = 'fcm_metaG_comparison.csv'
 
 ##### 1. Generate Total DNA Reads Plot #####
 ##### QC for Sequencing Data #####
@@ -138,7 +138,7 @@ dna_counts_plot<- plot_total_dna_reads(input_dna_reads_file)
 dna_counts_plot
 ```
 
-![](cleaned_comm_dyn_metaG_code_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](additional_files/plots/unnamed-chunk-3-1.png)<!-- -->
 
 ``` r
 ##### Generate Number of Recovered DNA Standards #####
@@ -147,7 +147,7 @@ internal_standard_plot <- plot_dna_standards(dna_standards_file)
 internal_standard_plot
 ```
 
-![](cleaned_comm_dyn_metaG_code_files/figure-gfm/unnamed-chunk-3-2.png)<!-- -->
+![](additional_files/plots/unnamed-chunk-3-2.png)<!-- -->
 
 ``` r
 ##### FCM vs metaG Comparison #####
@@ -171,7 +171,7 @@ fcm_metaG_plot
     ## Warning: Removed 1 row containing missing values or values outside the scale range
     ## (`geom_point()`).
 
-![](cleaned_comm_dyn_metaG_code_files/figure-gfm/unnamed-chunk-3-3.png)<!-- -->
+![](additional_files/plots/unnamed-chunk-3-3.png)<!-- -->
 
 ##### 3. Define Functions for Read Mapping Results
 
@@ -311,7 +311,7 @@ lineplot_extraction_efficiency<- function(read_map_results_file,cluster_colors) 
 
 ``` r
 ##### Define Input Files #####
-read_map_results_file='/Users/jamesmullet/community_dynamics_data_readmap_normalized_absolute_counts.csv'
+read_map_results_file='community_dynamics_data_readmap_normalized_absolute_counts.csv'
 input_read_mapping <- read.csv(file = read_map_results_file)
 head(input_read_mapping)
 ```
@@ -348,7 +348,7 @@ read_map_plot<- plot_read_map_results(read_map_results_file,cluster_colors)
 read_map_plot
 ```
 
-![](cleaned_comm_dyn_metaG_code_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](additional_files/plots/unnamed-chunk-5-1.png)<!-- -->
 
 ``` r
 ##### 2. Generate Metagenomic Distribution - without extraction efficiency #####
@@ -356,7 +356,7 @@ read_map_lineplot<- plot_read_map_results_lineplot(read_map_results_file,cluster
 read_map_lineplot
 ```
 
-![](cleaned_comm_dyn_metaG_code_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
+![](additional_files/plots/unnamed-chunk-5-2.png)<!-- -->
 
 ``` r
 ##### 3. Generate Metagenomic Distribution - accounting for Extraction Efficiency #####
@@ -364,21 +364,21 @@ extraction_efficiency_corrected_lineplot<- lineplot_extraction_efficiency(read_m
 extraction_efficiency_corrected_lineplot
 ```
 
-![](cleaned_comm_dyn_metaG_code_files/figure-gfm/unnamed-chunk-5-3.png)<!-- -->
+![](additional_files/plots/unnamed-chunk-5-3.png)<!-- -->
 
 ``` r
 #write.csv(extraction_efficiency_corrected_lineplot, "test_comm_dyn_data.csv", row.names = FALSE)
 
 ##### Save Files as SVGs #####
-#Cairo(file = "/Users/jamesmullet/comm_dyn_metaG_overview_barchart_v2.svg", type = "svg", width = 40, height = 20, units = "in", dpi = 250)
+#Cairo(file = "comm_dyn_metaG_overview_barchart_v2.svg", type = "svg", width = 40, height = 20, units = "in", dpi = 250)
 #print(read_map_plot)  # 'final_graph' is the ggplot object
 #dev.off()
 
-#Cairo(file = "/Users/jamesmullet/comm_dyn_metaG_overview_lineplot.svg", type = "svg", width = 40, height = 20, units = "in", dpi = 250)
+#Cairo(file = "comm_dyn_metaG_overview_lineplot.svg", type = "svg", width = 40, height = 20, units = "in", dpi = 250)
 #print(read_map_lineplot)  # 'final_graph' is the ggplot object
 #dev.off()
 
-#Cairo(file = "/Users/jamesmullet/comm_dyn_metaG_extraction_efficiency.svg", type = "svg", width = 40, height = 25, units = "in", dpi = 200)
+#Cairo(file = "comm_dyn_metaG_extraction_efficiency.svg", type = "svg", width = 40, height = 25, units = "in", dpi = 200)
 #print(extraction_efficiency_plot)  # 'final_graph' is the ggplot object
 #dev.off()
 ```
