@@ -81,7 +81,7 @@ volcano_plot_thalassospira <- function(input_gene_table_file) {
 # Define Input Files and Variables #
 
 # Gene Table made using edgeR scripts in metaT #
-input_gene_table_file_replicate_analysis <- "/Users/jamesmullet/comm_dyn_edgeR_1905_1907_analysis_gene_table_v2.csv"
+input_gene_table_file_replicate_analysis <- "comm_dyn_edgeR_1905_1907_analysis_gene_table_v2.csv"
 
 
 # Run function command #
@@ -97,7 +97,7 @@ data_processing_output_1905_vs_1907
 ``` r
 #ggsave("comm_dyn_edgeR_1905_1907_analysis_volcano_plot.png", plot = data_processing_output_1905_vs_1907, width = 12, height = 8)
 
-#Cairo(file = "/Users/jamesmullet/comm_dyn_edgeR_1905_1907_analysis_volcano_plot.pdf", type = "pdf", width = 20, height = 10, units = "in", dpi = 100)
+#Cairo(file = "comm_dyn_edgeR_1905_1907_analysis_volcano_plot.pdf", type = "pdf", width = 20, height = 10, units = "in", dpi = 100)
 #print(data_processing_output_1905_vs_1907)  # 'final_graph' is the ggplot object
 #dev.off()
 
