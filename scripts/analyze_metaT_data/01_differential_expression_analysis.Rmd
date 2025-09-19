@@ -28,13 +28,13 @@ library(readxl)
 ##### 2. Load Files
 ```{r}
 # Input RNASeq File - post internal standard correction
-input_file <- "/Users/jamesmullet/updated_comm_dyn_wide_counts.tsv"
+input_file <- "updated_comm_dyn_wide_counts.tsv"
 
 # Combined metadata key #
-metadata_table <- "/Users/jamesmullet/pooled_key.csv"
+metadata_table <- "pooled_key.csv"
 
 # Annotations file of all genomes #
-annotation_file <- '/Users/jamesmullet/updated_comm_dyn_annotations_v2.xlsx'
+annotation_file <- 'updated_comm_dyn_annotations_v2.xlsx'
 annotations <- read_excel(annotation_file)
 annotations
 
