@@ -131,13 +131,13 @@ library(readxl)
 
 ``` r
 # Input RNASeq File - post internal standard correction
-input_file <- "/Users/jamesmullet/updated_comm_dyn_wide_counts.tsv"
+input_file <- "updated_comm_dyn_wide_counts.tsv"
 
 # Combined metadata key #
-metadata_table <- "/Users/jamesmullet/pooled_key.csv"
+metadata_table <- "pooled_key.csv"
 
 # Annotations file of all genomes #
-annotation_file <- '/Users/jamesmullet/updated_comm_dyn_annotations_v2.xlsx'
+annotation_file <- 'updated_comm_dyn_annotations_v2.xlsx'
 annotations <- read_excel(annotation_file)
 annotations
 ```
@@ -357,7 +357,7 @@ boxplot
     ## Warning: Removed 574 rows containing non-finite outside the scale range
     ## (`stat_boxplot()`).
 
-![](01_differential_expression_analysis_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](additional_files/plots/unnamed-chunk-3-1.png)<!-- -->
 
 ``` r
 ##### Generate Replicate Correlation Plots #####
@@ -377,7 +377,7 @@ correlation_plot
     ## Warning: Removed 3 rows containing missing values or values outside the scale range
     ## (`geom_point()`).
 
-![](01_differential_expression_analysis_files/figure-gfm/unnamed-chunk-3-2.png)<!-- -->
+![](additional_files/plots/unnamed-chunk-3-2.png)<!-- -->
 
 ##### 4. edgeR analysis
 
