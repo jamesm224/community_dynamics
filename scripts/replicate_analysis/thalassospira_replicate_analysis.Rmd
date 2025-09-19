@@ -15,12 +15,10 @@ library(Cairo)
 ##### 2. Create Function for Volcano Plots
 ```{r,fig.width=12, fig.height=8}
 ##### 1. Generate Heatmaps on Input Data for Comparison #####
-prepare_heatmap_dfs_thalassospira <- function(input_gene_table_file) {
+volcano_plot_thalassospira <- function(input_gene_table_file) {
   
   # Load Gene Table #
   gene_table <- read.csv(file = input_gene_table_file,header = TRUE, check.names = FALSE)
-  #gene_table<- gene_table%>% filter(day == experiment_day)
-  #pro_gene_table
 
   # Convert table to a Long Format #
   df_long <- gene_table %>%
@@ -32,6 +30,7 @@ prepare_heatmap_dfs_thalassospira <- function(input_gene_table_file) {
   df_long <- df_long %>%
     mutate(DEGs = ifelse(padj < 0.05 & abs(LFC) > 1.5, "significant", "not significant"))
   
+  # Volcano plot #
   volcano_plots <- ggplot(df_long, aes(x = LFC, y = -log10(padj),color = DEGs)) +
     geom_point() +
     scale_color_manual(values = c("significant" = "blue", "not significant" = "grey")) +
@@ -66,17 +65,21 @@ prepare_heatmap_dfs_thalassospira <- function(input_gene_table_file) {
 ##### 1. Run Preprocessing Step #####
 # Define Input Files and Variables #
 
+# Gene Table made using edgeR scripts in metaT #
 input_gene_table_file_replicate_analysis <- "/Users/jamesmullet/comm_dyn_edgeR_1905_1907_analysis_gene_table_v2.csv"
 
+
 # Run function command #
-data_processing_output_1905_vs_1907 <-prepare_heatmap_dfs_thalassospira(input_gene_table_file_replicate_analysis)
+data_processing_output_1905_vs_1907 <-volcano_plot_thalassospira(input_gene_table_file_replicate_analysis)
+
+# Plot Compares Prochlorococcus response in two treatments of Thalassospira and comparing the transcriptional responses of Thalassospira at Days 2, 4, and 5 #
 
 data_processing_output_1905_vs_1907
 #ggsave("comm_dyn_edgeR_1905_1907_analysis_volcano_plot.png", plot = data_processing_output_1905_vs_1907, width = 12, height = 8)
 
-Cairo(file = "/Users/jamesmullet/comm_dyn_edgeR_1905_1907_analysis_volcano_plot.pdf", type = "pdf", width = 20, height = 10, units = "in", dpi = 100)
-print(data_processing_output_1905_vs_1907)  # 'final_graph' is the ggplot object
-dev.off()
+#Cairo(file = "/Users/jamesmullet/comm_dyn_edgeR_1905_1907_analysis_volcano_plot.pdf", type = "pdf", width = 20, height = 10, units = "in", dpi = 100)
+#print(data_processing_output_1905_vs_1907)  # 'final_graph' is the ggplot object
+#dev.off()
 
 #ggsave("comm_dyn_edgeR_1905_1907_analysis_volcano_plot.png", plot = data_processing_output_1905_vs_1907, width = 12, height = 8)
 ```
