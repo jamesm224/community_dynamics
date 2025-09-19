@@ -31,17 +31,17 @@ Data Analysis: There were a few others that weren't used much but here are most 
 
 ## File Structure
    - pipelines
-   -    HIFI-genome-closing-improved - Contains genome closing workflow
-   -    rnaseq-absolute-pipeline - Contains scripts for RNASeq analysis
+      - HIFI-genome-closing-improved - Contains genome closing workflow
+      - rnaseq-absolute-pipeline - Contains scripts for RNASeq analysis
    - scripts
-   -    analyze_metaG_data - Contains metagenomic data analysis
-   -    analyze_metaT_data - Contains metatranscriptomic data analysis
-   -    replicate analysis - Contains Thalassospira strain-level analysis
+      - analyze_metaG_data - Contains metagenomic data analysis
+      - analyze_metaT_data - Contains metatranscriptomic data analysis
+      - replicate analysis - Contains Thalassospira strain-level analysis
 
 ## Reproducing Data Analysis
 1. Download raw data from NCBI (BioProject: )
    
-2. Process RNA Seq data through a series of scripts to process RNASeq
+2. Process RNA Seq data through a series of scripts to process RNASeq (Nhi could you fill this out when you get the chance please?)
   - The following Github link was used: https://github.com/nhinvo/rnaseq-absolute-pipeline
   - The pipeline utilizes the following packages:
       
