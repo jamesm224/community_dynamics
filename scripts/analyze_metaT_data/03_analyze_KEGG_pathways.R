@@ -1,0 +1,447 @@
+---
+title: "03_analyze_KEGG_pathways"
+date: "2025-09-19"
+---
+
+##### 1. Load Packages
+```{r}
+library(ggplot2)
+library(ggrepel)
+library(hexbin)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(cowplot)
+library(pheatmap)
+library(matrixStats)
+library(forcats)
+library(tidyplots)
+library(edgeR)
+library(MicrobiotaProcess)
+library(clusterProfiler)
+library(enrichplot)
+library(Cairo)
+library(ComplexUpset)
+library(clusterProfiler)
+library(KEGGREST)
+library(readxl)
+library(RColorBrewer)
+library(pheatmap)
+library(tibble)
+library(httr)
+library(tidyr)
+```
+
+##### 2. Load Files
+```{r}
+# Define Input Files and Variables #
+#input_gene_table_file_hets <- "comm_dyn_het_overview_gene_table.csv"
+input_gene_table_file_hets <- "comm_dyn_het_overview_gene_table_v2.csv"
+
+# Load Gene Table #
+het_gene_table <- read.csv(file = input_gene_table_file_hets,header = TRUE, check.names = FALSE)
+
+# Load Annotations #
+annotation_file <- 'updated_comm_dyn_annotations_v2.xlsx'
+annotations <- read_excel(annotation_file)
+#annotations
+
+# Load Updated KEGG Pathway #
+# This key was created by taking the gene pathways from KEGG API #
+kegg_gene_key <- 'KEGG_KO_with_PathwayHierarchy.csv'
+kegg_key <- read.csv(file = kegg_gene_key)
+#kegg_key
+
+##### Obtain Corrected Cell Counts #
+metadata_table <- "updated_FCM_comm_dyn_data.csv"
+
+# Load Internal standard corrected RNA Counts - before Cell Count correction #
+raw_het_counts <- 'updated_unfcm_corrected_gene_counts.tsv'
+
+# File for Part 5 #
+input_gene_table_file_pro <- "comm_dyn_edgeR_Pro_v2_overview_gene_table.csv"
+
+
+```
+
+##### 3. Het Overview Heatmap
+```{r,fig.width=10, fig.height=6}
+
+##### 2. Generate Heatmaps on Input Data for Hets #####
+prepare_heatmap_dfs_hets <- function(het_gene_table,annotations,day_to_remove) {
+  
+  # Convert table to a Long Format #
+  df_long <- het_gene_table %>%
+    pivot_longer(
+      cols = contains("_LFC") | contains("_pvalue")| contains("_padj"),
+      names_to = c("day", ".value"),
+      names_pattern = "(.*)_(.*)")
+  
+  df_long<- df_long%>% filter(day == day_to_remove)
+  
+  # Obtain the genes that have are significant - as defined by LFC > 1.5 or LFC < -1.5 AND padj < 0.05 #
+  df_long <- df_long %>%
+    mutate(significance = ifelse(padj < 0.05 & abs(LFC) > 1.5, "significant", "not significant"))
+  
+  # Define the significant genes accross each treatment
+  significant_genes <- df_long %>%
+    
+    # If you want only significant genes just uncomment the line below #
+    #filter(significance == "significant") %>%  # Keep only significant genes
+    select(ID,em_Preferred_name,em_desc,LFC,day) %>%                        # Select only the gene identifier column
+    distinct()
+  
+  # Only keep genes with at least one significant gene accross all treatments #
+  df_long<- df_long%>%filter(ID%in%significant_genes$ID)%>%
+    as.data.frame()
+  
+  annotations <- annotations %>%
+    mutate(ID = ifelse(organism == "Pseudohoeflea_1940", paste0(ID, "_Pseudohoeflea"), ID))
+  
+  # Rename samples for interpretability #
+  merged_df <- merge(df_long, annotations, by = c("ID","em_Preferred_name","em_desc"))
+  
+  # Overview Counts #
+  grouped_merged_counts <- merged_df %>%
+    group_by(ID,organism,treatment,day,em_Preferred_name,em_KEGG_ko,kegg,LFC) %>%
+    summarise(.groups = 'drop') %>%
+    as.data.frame()
+  
+  # Return Cleaned Tables #
+  return(grouped_merged_counts)
+}
+
+##### 2. Obtaining KEGG Annotations for each gene #####
+obtain_kegg_annotations_heatmap <- function(data_processing_output_hets,kegg_gene_key) {
+  
+  # Subset DF #
+  subsetted_KEGG_pathway <- subset(data_processing_output_hets, select = c(kegg,organism,ID))
+  names(subsetted_KEGG_pathway)[names(subsetted_KEGG_pathway) == "kegg"] <- "em_KEGG_ko"
+  
+  # Remove NAs # 
+  df_clean <- subsetted_KEGG_pathway %>% filter(!is.na(em_KEGG_ko))
+  df_clean
+  
+  # Merge df and KEGG Key #
+  merged_kegg_annotations <- merge(df_clean, kegg_gene_key, by = "em_KEGG_ko")
+
+  return(merged_kegg_annotations)
+}
+
+##### 3. Visualize heatmap #####
+generate_heatmap <- function(merged_kegg_data) {
+  
+  heatmap_counts <- merged_kegg_data %>%
+    #group_by(Description,ID,organism) %>%
+    group_by(Overview_category,organism) %>%
+    #summarise(median_LFC = median(LFC), # If you want to get median LFC
+    summarise(median_LFC = mean(LFC), # If you want to get mean LFC
+              .groups = 'drop') %>%
+    as.data.frame()
+
+  heatmap_counts$organism <- gsub("Alteromonas_1904", "Alteromonas", heatmap_counts$organism)
+  heatmap_counts$organism <- gsub("Marinobacter_1943", "Marinobacter", heatmap_counts$organism)
+  heatmap_counts$organism <- gsub("Pseudohoeflea_1940", "Pseudohoeflea", heatmap_counts$organism)
+  heatmap_counts$organism <- gsub("Thalassospira_1907", "Thalassospira", heatmap_counts$organism)
+
+  heatmap_counts$organism = factor(heatmap_counts$organism, levels=c('Alteromonas','Pseudohoeflea','Thalassospira','Marinobacter'))
+
+  #colors <- colorRampPalette(brewer.pal(11, "RdYlBu"))(100)
+  
+  # Pivot to wide format (genes as rows, samples as columns)
+  wide_heatmap <- heatmap_counts %>%
+    pivot_wider(names_from = Overview_category,values_from = median_LFC) %>%
+    column_to_rownames(var = "organism")
+  
+  #neg_colors <- colorRampPalette(c("red", "yellow"))(25)  # From blue to white for negative values
+  #pos_colors <- colorRampPalette(c("yellow", "blue"))(25)   # From white to red for positive values
+  #color_palette <- c(neg_colors, pos_colors[-1])
+  colors <- colorRampPalette(brewer.pal(11, "RdYlBu"))(49)
+  breaks <- c(seq(-1, 0, length.out = 25), seq(0, 1, length.out = 24)[-1])
+  
+  #heatmap <- ggplot(heatmap_counts, aes(Overview_category,organism, fill= median_LFC)) + 
+  heatmap <- pheatmap(wide_heatmap,cluster_rows = FALSE,show_colnames = TRUE,breaks=breaks,
+                      clustering_distance_rows = "euclidean", clustering_distance_cols = "euclidean",clustering_method = "ward.D2",
+                      #annotation_col = col_annotation,cluster_cols = heatmap$tree_col,
+                      annotation_names_col= FALSE,color = colors)
+
+   
+return(wide_heatmap)
+}
+
+
+##### 1. Run Preprocessing Step #####
+##### Check lines below before generating this Heatmap #####
+
+# Choose the day to keep # 
+day_to_keep<- 'Day2'
+#day_to_keep<- 'Day4'
+#day_to_keep<- 'Day5'
+
+# Load Raw Input
+data_processing_output_hets <-prepare_heatmap_dfs_hets(het_gene_table,annotations,day_to_keep)
+#data_processing_output_hets
+
+# Create KEGG Key #
+kegg_monoxenic_heatmap_key <- obtain_kegg_annotations_heatmap(data_processing_output_hets,kegg_key)
+#kegg_monoxenic_heatmap_key
+
+# Subset df #
+mini_monoxenic_heatmap_df <- subset(data_processing_output_hets, select = c(ID,day,LFC,em_Preferred_name,organism,treatment))
+#mini_monoxenic_heatmap_df
+
+# Create a clean df input for plots #
+merged_monoxenic_heatmap_table <- merge(kegg_monoxenic_heatmap_key, mini_monoxenic_heatmap_df, by = c("ID","organism"))
+merged_monoxenic_heatmap_table <- merged_monoxenic_heatmap_table[!duplicated(merged_monoxenic_heatmap_table), ]
+head(merged_monoxenic_heatmap_table)
+
+# Subset graphing dataframe #
+# Subset to day of interest #
+temp_df<- merged_monoxenic_heatmap_table%>% filter(day == day_to_keep)
+
+# Only keep pathways of interest #
+# If you want to adjust, remove or add more  '|(Overview_category == 'pathway_of_interest') ' #
+
+# Keep major KEGG Categories of Interest #
+temp_df<- merged_monoxenic_heatmap_table%>% filter((Overview_category == 'Amino acid metabolism')|(Overview_category == 'Biosynthesis of other secondary metabolites')|(Overview_category == 'Carbohydrate metabolism')|(Overview_category == 'Cell growth and death')|(Overview_category == 'Cell motility')|(Overview_category == 'Cellular community - prokaryotes')|(Overview_category == 'Endocrine and metabolic disease')|(Overview_category == 'Energy metabolism')|(Overview_category == 'Environmental adaptation')|(Overview_category == 'Folding, sorting, and degradation')|(Overview_category == 'Glycan Biosynthesis and Metabolism')|(Overview_category == 'Lipid metabolism')|(Overview_category == 'Membrane transport')|(Overview_category == 'Metabolism of cofactors and vitamins')|(Overview_category == 'Metabolism of other amino acids')|(Overview_category == 'Metabolism of terpenoids and polyketides')|(Overview_category == 'Nucleotide metabolism')|(Overview_category == 'Replication and repair')|(Overview_category == 'Signal transduction')|(Overview_category == 'Translation')|(Overview_category == 'Transport and catabolism'))
+
+# Plot Overview Heatmap #
+heatmap_plot <- generate_heatmap(temp_df)
+heatmap_plot
+```
+
+##### 4. Heterotroph KEGG Pathway Plots
+```{r,fig.width=10, fig.height=14}
+##### 1. Calculate Standard Error #####
+std_error <- function(x) {
+  return(sd(x) / sqrt(length(x)))
+}
+
+##### 2. Plot Pathway Bar Plots #####
+pathway_bar_plot <- function(input_df,remove_day,pathway_to_analyze,het_to_remove) {
+
+  cluster_colors <- c(`Alteromonas`= '#c63c26',`Thalassospira`= '#C17DA5',`Pseudohoeflea`='#EAC043',
+                    `Marinobacter`= '#59a9b7',`MED4`='#9ab54d',Community='#3a7db8')
+
+  subset_cluster_output <- input_df %>% mutate(em_Preferred_name = if_else(em_Preferred_name == "", "hypothetical", em_Preferred_name))
+  subset_cluster_output<- subset_cluster_output%>% filter(treatment != 'Thalassospira_1905')
+  subset_cluster_output$Overview_category <- str_squish(subset_cluster_output$Overview_category)
+  
+  # Remove extra days not of interest #
+  subset_cluster_output<- subset_cluster_output%>% filter(day == remove_day)
+  
+  subset_cluster_output<- subset_cluster_output%>% filter(Overview_category == pathway_to_analyze)
+  subset_cluster_output <- subset_cluster_output[!is.na(subset_cluster_output$Overview_category), ]
+  
+  # Group dataframe - currently by mean per pathway #
+  overview_counts <- subset_cluster_output %>%
+    group_by(Overview_category,pathway_name,treatment,day) %>%
+    #group_by(updated_COG_name,treatment,day) %>%
+    summarise(mean_LFC = mean(LFC),
+              StdError = std_error(LFC),
+              .groups = 'drop') %>%
+    as.data.frame()
+
+  # Plot COG Pathway # 
+  exploratory_bar_plot<-subset_cluster_output %>%
+    tidyplot(x = LFC, y = pathway_name,fill = treatment) %>%
+    #add_mean_dot(size=2.3,dodge_width = 0,alpha = 0.8) %>% # Can change to dot plot here
+    add_mean_bar(alpha = 0.6) %>%
+    #add_sem_errorbar(linewidth=0.5,dodge_width = 0,width=0) %>%
+    add_sem_errorbar(linewidth=0.5,width=0) %>%
+    adjust_colors(new_colors = cluster_colors) %>%
+    add_reference_lines(x = 0,linetype=1) %>%
+    add_reference_lines(x = -1.5) %>%
+    add_reference_lines(x = 1.5) %>%
+    remove_y_axis_title() %>%
+    
+    # Adjust axes limits as needed #
+    adjust_x_axis(limits=c(-3,3)) %>%
+    #adjust_x_axis(limits=c(-4,4)) %>%
+    #adjust_x_axis(limits=c(-5,5)) %>%
+    #adjust_x_axis(limits=c(-6,6)) %>%
+    #adjust_x_axis(limits=c(-8,8)) %>%
+    #adjust_x_axis(limits=c(-20,12)) %>%
+    add_title(pathway_to_analyze) %>%
+    #add_title("Amino Acid LFC Plot") %>%
+    #add_title("Nucleotide LFC Plot") %>%
+    adjust_legend_title("Heterotrophs") %>%
+    adjust_legend_position("right") %>%
+    
+    # If you want to adjust plot size uncomment or edit #
+    #adjust_size(width = 70, height = 90, unit = "mm") # Translation & Env. Adaptation
+    #adjust_size(width = 80, height = 120, unit = "mm") # Cellular Community & Endocrine & Transport
+    #adjust_size(width = 70, height = 200, unit = "mm") # Terpenoids R&R
+    #adjust_size(width = 70, height = 60, unit = "mm")# Nucleotides & mem. transport & motility
+    #adjust_size(width = 90, height = 280, unit = "mm")# Cofactor
+    adjust_size(width = 120, height = 280, unit = "mm")# Lipids & Amino acid & Carbs & Sec.Met. & sig. transduction
+    
+    # Save plot however you want it to be called #
+    #save_plot("pathways_carbs_day5_LFC_plot_v1.pdf")
+    
+  return(exploratory_bar_plot)
+}
+
+##### Run Het Heatmap Lines First #####
+# Choose day of interest #
+# Should be the same as code block above (3. Het Overview Heatmap) #
+day_to_keep<- 'Day2'
+#day_to_keep<- 'Day4'
+#day_to_keep<- 'Day5'
+
+# Choose pathway to visualize #
+#pathway_to_analyze <- 'Carbohydrate metabolism'
+pathway_to_analyze <- 'Amino acid metabolism'
+#pathway_to_analyze <- 'Nucleotide metabolism'
+#pathway_to_analyze <- 'Metabolism of cofactors and vitamins'
+#pathway_to_analyze <- 'Lipid metabolism'
+#pathway_to_analyze <- 'Metabolism of terpenoids and polyketides'
+#pathway_to_analyze <- 'Endocrine and metabolic disease'
+#pathway_to_analyze <- 'Biosynthesis of other secondary metabolites'
+#pathway_to_analyze <- 'Translation'
+#pathway_to_analyze <- 'Cellular community - prokaryotes'
+#pathway_to_analyze <- 'Replication and repair'
+#pathway_to_analyze <- 'Transport and catabolism'
+#pathway_to_analyze <- 'Environmental adaptation'
+#pathway_to_analyze <- 'Signal transduction'
+#pathway_to_analyze <- 'Energy metabolism'
+#pathway_to_analyze <- 'Membrane transport'
+#pathway_to_analyze <- 'Metabolism of other amino acids'
+#pathway_to_analyze <- 'Cell growth and death'
+#pathway_to_analyze <- 'Cell motility'
+
+# Process plots #
+pathway_bar_plot_hets <- pathway_bar_plot(merged_monoxenic_heatmap_table,day_to_keep,pathway_to_analyze,het_to_remove)
+pathway_bar_plot_hets
+
+
+```
+
+##### 5. Analyze Prochlorococcus KEGG Pathways
+```{r,fig.width=10, fig.height=8}
+
+##### 1. Generate Heatmaps on Input Data for Pro #####
+prepare_heatmap_dfs_pro <- function(input_gene_table_file_pro,annotation_file) {
+  
+  # Load Gene Table #
+  pro_gene_table <- read.csv(file = input_gene_table_file_pro,header = TRUE, check.names = FALSE)
+
+  # Convert table to a Long Format #
+  df_long <- pro_gene_table %>%
+    pivot_longer(
+      cols = contains("_LFC") | contains("_pvalue")| contains("_padj"),
+      names_to = c("treatment", ".value"),
+      names_pattern = "(.*)_(.*)")
+
+  annotations <- read_excel(annotation_file)
+  mini_annotations_df <- subset(annotations, select = c(ID,kegg))
+  
+  merged_het_file <- merge(df_long, mini_annotations_df, by = "ID", all.x = TRUE)
+  # Return Cleaned Tables #
+  return(merged_het_file)
+}
+
+##### 2. Obtaining KEGG Annotations for each gene #####
+obtain_kegg_annotations <- function(kegg_annotated_df_pro,kegg_gene_key) {
+  
+  subsetted_KEGG_pathway <- subset(kegg_annotated_df_pro, select = c(kegg,treatment,ID))
+  names(subsetted_KEGG_pathway)[names(subsetted_KEGG_pathway) == "kegg"] <- "em_KEGG_ko"
+  subsetted_KEGG_pathway$em_KEGG_ko <- str_replace_all(subsetted_KEGG_pathway$em_KEGG_ko, "ko:", "")
+  
+  df_clean <- subsetted_KEGG_pathway %>% filter(!is.na(em_KEGG_ko))
+  #df_clean
+  
+  merged_kegg_annotations <- merge(df_clean, kegg_gene_key, by = "em_KEGG_ko")
+
+  return(merged_kegg_annotations)
+}
+
+##### 3. Calculate Standard Error #####
+std_error <- function(x) {
+  return(sd(x) / sqrt(length(x)))
+}
+
+##### 2. Plot Gene Bar Plots #####
+pathway_bar_plot <- function(input_df,new_organism,gene_pathway_category) {
+
+  # Define colors #
+  cluster_colors <- c(`2`= '#A8E6A1',`4`= '#4CAF50',`5`='#1B5E20')
+  
+
+  subset_cluster_output <- input_df %>% mutate(em_Preferred_name = if_else(em_Preferred_name == "", "hypothetical", em_Preferred_name))
+  subset_cluster_output<- subset_cluster_output%>% filter(treatment != 'Thalassospira_1')
+  
+  # Obtain the average LFC per pathway and std error #
+  overview_counts <- subset_cluster_output %>%
+    group_by(Overview_category,pathway_name,day) %>%
+    summarise(mean_LFC = mean(LFC),
+              StdError = std_error(LFC),
+              .groups = 'drop') %>%
+    as.data.frame()
+  
+  # Sort days #
+  overview_counts$day <- factor(overview_counts$day, levels=c('5','4','2'))
+  
+  # Subset to a pathway for easy visualization #
+  overview_counts<- overview_counts%>% filter(Overview_category == 'Amino acid metabolism')
+
+  # Plot COG Pathway # 
+  exploratory_bar_plot<-
+    ggplot(overview_counts, aes(x=mean_LFC,y=pathway_name,fill=day))+
+    geom_bar(stat="identity",position='dodge',color='black')+
+    geom_errorbar(aes(xmin = mean_LFC - StdError, xmax = mean_LFC + StdError),position = position_dodge(width = 0.9),width = 0) +
+    theme_classic() +
+    ggtitle(new_organism) +
+    xlab('mean Log2FC')+
+    theme(
+      axis.text.x = element_text(family = "Helvetica",color='black',size=12),
+      axis.text.y = element_text(family = "Helvetica",color='black',size=12),
+      axis.title.y = element_blank(),
+      plot.title = element_text(family = "Helvetica",color='black',size=12,hjust = 0.5),
+      axis.title.x = element_text(family = "Helvetica",color='black',size=12),
+      strip.text.y = element_text(family = "Helvetica",color='black',size=12,angle = 0, vjust = 0.5, hjust = 0),
+      strip.text.x = element_text(family = "Helvetica",color='black',size=12,angle = 0),
+      strip.background.y = element_blank(),
+      legend.text = element_text(family = "Helvetica",size = 12),
+      legend.title = element_text(family = "Helvetica",size = 12),
+      panel.border=element_blank(),
+      panel.background = element_rect(colour = "black", size=1),
+      legend.position='right')+
+    scale_fill_manual(values = cluster_colors,breaks = c("2", "4", "5")) +
+    facet_grid(rows=vars(Overview_category),scales = 'free_y',space = "free_y")+
+    geom_vline(xintercept = 1.2,color='black',linetype = "dotted")+
+    geom_vline(xintercept = -1.2,color='black',linetype = "dotted")+
+    geom_vline(xintercept = 0,color='black',linetype = "longdash")+
+    scale_x_continuous(limits = c(-1.5, 1.5))
+  
+  return(exploratory_bar_plot)
+}
+
+
+##### 1. Run Preprocessing Step #####
+# Define Input Files and Variables #
+# Change plot label as desired #
+plot_title_pro <- "Pathways Enriched in Community vs Control with 1.2 LFC"
+
+# Run function command #
+data_processing_output_pro <-prepare_heatmap_dfs_pro(input_gene_table_file_pro,annotation_file)
+#data_processing_output_pro
+
+# Merge kegg and input data #
+kegg_annotated_df_pro <- obtain_kegg_annotations(data_processing_output_pro,kegg_key)
+#kegg_annotated_df_pro
+
+mini_lfc_df_pro <- subset(data_processing_output_pro, select = c(ID,day,LFC,treatment,em_Preferred_name))
+#mini_lfc_df_pro
+
+merged_LFC_table_pro <- merge(kegg_annotated_df_pro, mini_lfc_df_pro, by = c("ID","treatment"))
+
+# This line can be added to only subset for the response in a particular condition #
+# Currently just looking at Pro in the community #
+merged_LFC_table_pro<- merged_LFC_table_pro%>% filter(treatment == 'Community')
+#merged_LFC_table_pro
+
+pathway_bar_plot_pro <- pathway_bar_plot(merged_LFC_table_pro,plot_title_pro)
+pathway_bar_plot_pro
+
+```
