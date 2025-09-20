@@ -100,17 +100,26 @@ Process meta-transcriptomics samples through Snakemake pipeline located in `pipe
 
 ### RNAseq Post-processing
 Process the RNASeq data. The remainder of Data Analysis was performed in R.
-  - Process raw data to obtain edgeR data.
-    - Relative read counts were used for Differential Expression Analysis
-    - Includes ClusterProfiler Pathway Enrichement Analysis
-      
-  - Analyze Differential Expression Analysis results for RNASeq data
-    - Includes heatmaps, pathway plots, and LFC analysis
-      
-  - Analyze the absolute count RNASeq data
-    - Includes the conversion of relative to absolute count data
-    - Incorporates a customizable script for generating gene diagrams for all desired KEGG pathways
+This data analysis was developed to be easily reproducible and understand.
+All corresponding .Rmd files also include a visual .md file that displays the results from the R scripts in a user friendly way.
 
+   - 01_differential_expression_analysis: Process raw data to obtain differentially expressed genes
+      - Process raw data to obtain edgeR data.
+      - Relative read counts were used for Differential Expression Analysis
+        
+   - 02_processing_relative_RNASeq_data: Analyze differentially expressed genes
+      - Contains overview heatmaps, dotplots, COG overview, LFC analysis
+      - Includes ClusterProfiler Pathway Enrichement Analysis
+        
+   - 03_analyze_KEGG_pathways: Pathway analysis
+      - Contains KEGG and pathway analysis for heterotrophs and Prochlorococcus
+      - Has overview heatmaps and specific pathway plot breakdown
+        
+  - 04_absolute_RNA_analysis: Examining cell count corrected data
+     - Converts data to transcript per cell counts
+     - Incorporates a customizable script for generating gene diagrams for all desired KEGG pathways
+     - Contains a overview KEGG heatmap and heatmap for gene presence/absence analysis
+       
 ### Metagenomics Analysis   
 Process metagenomic data using bowtie and read map to the known reference genomes  
   - Genomes used in this study
