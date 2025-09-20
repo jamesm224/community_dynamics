@@ -70,16 +70,16 @@ library(tibble)
 # Define Input Files and Variables #
 
 # Load Annotations #
-annotation_file <- '/Users/jamesmullet/updated_comm_dyn_annotations_v2.xlsx'
+annotation_file <- 'updated_comm_dyn_annotations_v2.xlsx'
 annotations <- read_excel(annotation_file)
 
 # Load Updated KEGG Pathway #
 # This key was created by taking the gene pathways from KEGG API #
-kegg_gene_key <- '/Users/jamesmullet/KEGG_KO_with_PathwayHierarchy.csv'
+kegg_gene_key <- 'KEGG_KO_with_PathwayHierarchy.csv'
 kegg_key <- read.csv(file = kegg_gene_key)
 
 # Obtain Corrected Cell Counts #
-metadata_table <- "/Users/jamesmullet/updated_FCM_comm_dyn_data.csv"
+metadata_table <- "updated_FCM_comm_dyn_data.csv"
 
 temp <- read.csv(file = metadata_table)
 
@@ -372,7 +372,7 @@ monoxenic_pathway_percent_plot <- percent_pathway_bar_plot(merged_monoxenic_abs_
 monoxenic_pathway_percent_plot
 ```
 
-![](04_absolute_RNA_analysis_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](additional_files/plots/04-chunk-4-1.png)<!-- -->
 
 ##### 5. Absolute Count Heatmap
 
@@ -460,7 +460,7 @@ heatmap_plot <- generate_abs_heatmap(cleaning_df)
 heatmap_plot
 ```
 
-![](04_absolute_RNA_analysis_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](additional_files/plots/04-chunk-5-1.png)<!-- -->
 
 ##### 6. Gene Presence Absence Check
 
@@ -516,4 +516,4 @@ kegg_gene_plots<-plot_kegg_results(cleaned_df)
 kegg_gene_plots
 ```
 
-![](04_absolute_RNA_analysis_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](additional_files/plots/04-chunk-6-1.png)<!-- -->
