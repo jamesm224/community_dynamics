@@ -1,0 +1,86 @@
+---
+title: "Thalassospira_replicate_analysis"
+output: rmarkdown::github_document
+---
+
+##### 1. Load Packages
+```{r}
+library(ggplot2)
+library(ggrepel)
+library(dplyr)
+library(tidyr)
+library(Cairo)
+```
+
+##### 2. Create Function for Volcano Plots
+```{r,fig.width=12, fig.height=8}
+##### 1. Generate Heatmaps on Input Data for Comparison #####
+volcano_plot_thalassospira <- function(input_gene_table_file) {
+  
+  # Load Gene Table #
+  gene_table <- read.csv(file = input_gene_table_file,header = TRUE, check.names = FALSE)
+
+  # Convert table to a Long Format #
+  df_long <- gene_table %>%
+    pivot_longer(
+      cols = contains("_LFC") | contains("_pvalue")| contains("_padj"),
+      names_to = c("day", ".value"),
+      names_pattern = "(.*)_(.*)")
+  
+  df_long <- df_long %>%
+    mutate(DEGs = ifelse(padj < 0.05 & abs(LFC) > 1.5, "significant", "not significant"))
+  
+  # Volcano plot #
+  volcano_plots <- ggplot(df_long, aes(x = LFC, y = -log10(padj),color = DEGs)) +
+    geom_point() +
+    scale_color_manual(values = c("significant" = "blue", "not significant" = "grey")) +
+    facet_wrap(~ organism + day) +
+    #facet_grid(cols=vars(day),rows=vars(),space="free")+
+    theme_classic()+
+    labs(x = "Log2 Fold Change",
+       y = "-log10(FDR)",
+       color = "Significance") +
+    theme(#axis.text.x = element_text(angle = 90,hjust=0.9,vjust=0.5,family = "Helvetica",color='black',size=18),
+        axis.text.x = element_text(family = "Helvetica",color='black',size=14),
+        axis.text.y = element_text(family = "Helvetica",color='black',size=14),
+        axis.title.x = element_text(family = "Helvetica",color='black',size=14),
+        #axis.title.x = element_blank(),
+        axis.title.y = element_text(family = "Helvetica",color='black',size=14),
+        legend.text = element_text(family = "Helvetica",size = 14),
+        legend.title = element_text(family = "Helvetica",size = 14),
+        strip.text = element_text(family = "Helvetica",color='black',size=14),
+        legend.position='right')+
+    geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "black") +
+    geom_vline(xintercept = 2, linetype = "dashed", color = "black") +
+    geom_vline(xintercept = -2, linetype = "dashed", color = "black")+
+    scale_y_continuous(expand = c(0,0),limits = c(0,5))
+  
+  # Return Cleaned Tables #
+  return(volcano_plots)
+}
+```
+
+##### 3. Process Data
+```{r,fig.width=12, fig.height=8}
+##### 1. Run Preprocessing Step #####
+# Define Input Files and Variables #
+
+# Gene Table made using edgeR scripts in metaT #
+input_gene_table_file_replicate_analysis <- "/Users/jamesmullet/comm_dyn_edgeR_1905_1907_analysis_gene_table_v2.csv"
+
+
+# Run function command #
+data_processing_output_1905_vs_1907 <-volcano_plot_thalassospira(input_gene_table_file_replicate_analysis)
+
+# Plot Compares Prochlorococcus response in two treatments of Thalassospira and comparing the transcriptional responses of Thalassospira at Days 2, 4, and 5 #
+
+data_processing_output_1905_vs_1907
+#ggsave("comm_dyn_edgeR_1905_1907_analysis_volcano_plot.png", plot = data_processing_output_1905_vs_1907, width = 12, height = 8)
+
+#Cairo(file = "/Users/jamesmullet/comm_dyn_edgeR_1905_1907_analysis_volcano_plot.pdf", type = "pdf", width = 20, height = 10, units = "in", dpi = 100)
+#print(data_processing_output_1905_vs_1907)  # 'final_graph' is the ggplot object
+#dev.off()
+
+#ggsave("comm_dyn_edgeR_1905_1907_analysis_volcano_plot.png", plot = data_processing_output_1905_vs_1907, width = 12, height = 8)
+```
+
