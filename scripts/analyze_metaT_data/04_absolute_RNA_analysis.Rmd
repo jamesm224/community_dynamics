@@ -31,16 +31,16 @@ library(tibble)
 # Define Input Files and Variables #
 
 # Load Annotations #
-annotation_file <- '/Users/jamesmullet/updated_comm_dyn_annotations_v2.xlsx'
+annotation_file <- 'updated_comm_dyn_annotations_v2.xlsx'
 annotations <- read_excel(annotation_file)
 
 # Load Updated KEGG Pathway #
 # This key was created by taking the gene pathways from KEGG API #
-kegg_gene_key <- '/Users/jamesmullet/KEGG_KO_with_PathwayHierarchy.csv'
+kegg_gene_key <- 'KEGG_KO_with_PathwayHierarchy.csv'
 kegg_key <- read.csv(file = kegg_gene_key)
 
 # Obtain Corrected Cell Counts #
-metadata_table <- "/Users/jamesmullet/updated_FCM_comm_dyn_data.csv"
+metadata_table <- "updated_FCM_comm_dyn_data.csv"
 
 temp <- read.csv(file = metadata_table)
 
