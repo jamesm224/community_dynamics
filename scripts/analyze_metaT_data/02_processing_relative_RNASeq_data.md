@@ -544,7 +544,7 @@ num_clusters <- 2
 heatmap_output_pro <-generate_heatmaps(heatmap_input_pro,num_clusters)
 ```
 
-![](additional_files/unnamed-chunk-4-1.png)<!-- -->![](additional_files/unnamed-chunk-4-2.png)<!-- -->
+![](additional_files/plots/unnamed-chunk-4-1.png)<!-- -->![](additional_files/plots/unnamed-chunk-4-2.png)<!-- -->
 
 ``` r
 updated_heatmap_pro <- heatmap_output_pro$updated_heatmap
@@ -653,7 +653,7 @@ bar_chart_pro <-graph_overview_bar_chart(cluster_output_pro,cluster_colors)
 bar_chart_pro
 ```
 
-![](additional_files/unnamed-chunk-4-3.png)<!-- -->
+![](additional_files/plots/unnamed-chunk-4-3.png)<!-- -->
 
 ``` r
 ##### 5. Graph Overview #####
@@ -683,7 +683,7 @@ dotplot_chart_pro <-graph_overview_dotplot_pro(long_df_pro,new_organism,annotati
 dotplot_chart_pro
 ```
 
-![](additional_files/unnamed-chunk-4-4.png)<!-- -->
+![](additional_files/plots/unnamed-chunk-4-4.png)<!-- -->
 
 ``` r
 ##### Upset Plot #####
@@ -691,7 +691,7 @@ upset_plot_pro <- graph_upset_plot(long_df_pro)
 upset_plot_pro
 ```
 
-![](additional_files/unnamed-chunk-4-5.png)<!-- -->
+![](additional_files/plots/unnamed-chunk-4-5.png)<!-- -->
 
 ``` r
 ##### Save Files as SVGs #####
@@ -741,7 +741,7 @@ num_clusters <- 2
 heatmap_output_pro_comm <-generate_heatmaps(heatmap_input_pro_comm,num_clusters)
 ```
 
-![](additional_files/unnamed-chunk-5-1.png)<!-- -->![](additional_files/unnamed-chunk-5-2.png)<!-- -->
+![](additional_files/plots/unnamed-chunk-5-1.png)<!-- -->![](additional_files/plots/unnamed-chunk-5-2.png)<!-- -->
 
 ``` r
 updated_heatmap_pro_comm <- heatmap_output_pro_comm$updated_heatmap
@@ -856,7 +856,7 @@ num_clusters <- 2
 heatmap_output_hets <-generate_heatmaps(heatmap_input_hets,num_clusters)
 ```
 
-![](additional_files/unnamed-chunk-6-1.png)<!-- -->![](additional_files/unnamed-chunk-6-2.png)<!-- -->
+![](additional_files/plots/unnamed-chunk-6-1.png)<!-- -->![](additional_files/plots/unnamed-chunk-6-2.png)<!-- -->
 
 ``` r
 updated_heatmap_hets <- heatmap_output_hets$updated_heatmap
@@ -905,7 +905,7 @@ bar_chart_hets <-graph_overview_bar_chart(cluster_output_hets,cluster_colors)
 bar_chart_hets
 ```
 
-![](additional_files/unnamed-chunk-6-3.png)<!-- -->
+![](additional_files/plots/unnamed-chunk-6-3.png)<!-- -->
 
 ##### 4. Pro Pathway Enrichment Analysis
 
@@ -997,4 +997,4 @@ cluster_profiler_output_pro <- cluster_profiler(cluster_output_pro,plot_title_pr
 cluster_profiler_output_pro
 ```
 
-![](additional_files/unnamed-chunk-7-1.png)<!-- -->
+![](additional_files/plots/unnamed-chunk-7-1.png)<!-- -->
