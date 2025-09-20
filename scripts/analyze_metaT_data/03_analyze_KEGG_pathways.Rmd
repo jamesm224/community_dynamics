@@ -36,31 +36,31 @@ library(tidyr)
 ##### 2. Load Files
 ```{r}
 # Define Input Files and Variables #
-#input_gene_table_file_hets <- "/Users/jamesmullet/comm_dyn_het_overview_gene_table.csv"
-input_gene_table_file_hets <- "/Users/jamesmullet/comm_dyn_het_overview_gene_table_v2.csv"
+#input_gene_table_file_hets <- "comm_dyn_het_overview_gene_table.csv"
+input_gene_table_file_hets <- "comm_dyn_het_overview_gene_table_v2.csv"
 
 # Load Gene Table #
 het_gene_table <- read.csv(file = input_gene_table_file_hets,header = TRUE, check.names = FALSE)
 
 # Load Annotations #
-annotation_file <- '/Users/jamesmullet/updated_comm_dyn_annotations_v2.xlsx'
+annotation_file <- 'updated_comm_dyn_annotations_v2.xlsx'
 annotations <- read_excel(annotation_file)
 #annotations
 
 # Load Updated KEGG Pathway #
 # This key was created by taking the gene pathways from KEGG API #
-kegg_gene_key <- '/Users/jamesmullet/KEGG_KO_with_PathwayHierarchy.csv'
+kegg_gene_key <- 'KEGG_KO_with_PathwayHierarchy.csv'
 kegg_key <- read.csv(file = kegg_gene_key)
 #kegg_key
 
 ##### Obtain Corrected Cell Counts #
-metadata_table <- "/Users/jamesmullet/updated_FCM_comm_dyn_data.csv"
+metadata_table <- "updated_FCM_comm_dyn_data.csv"
 
 # Load Internal standard corrected RNA Counts - before Cell Count correction #
 raw_het_counts <- 'updated_unfcm_corrected_gene_counts.tsv'
 
 # File for Part 5 #
-input_gene_table_file_pro <- "/Users/jamesmullet/comm_dyn_edgeR_Pro_v2_overview_gene_table.csv"
+input_gene_table_file_pro <- "comm_dyn_edgeR_Pro_v2_overview_gene_table.csv"
 
 
 ```
