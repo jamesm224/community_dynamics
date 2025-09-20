@@ -1,7 +1,7 @@
 # Community Dynamics Working Title
 
 ## Introduction
-Here is the code associated with this project. It includes all of the code to reproduce all bioinformatic analysis performed in this paper. It contains code for genome assembly, RNASeq analysis, metagenomic, metatranscriptomic, and additional analysis.
+Prochlorococcus is one of the most important photosynthetic organisms in Earth's oceans. While this microbe is abundant, there still remains a limited understanding of how Prochlorococcus interacts with heterotrophs. Here we isolated four of the most abundant strains associated with MED4 and through the use of absolute quantification of RNA, DNA, and cell counts we examine how these heterotrophs impact the growth curve of Prochlorococcus. Here is the code associated with this project. It includes all of the code to reproduce all bioinformatic analysis performed in this paper. It contains code for genome assembly, RNASeq processing, metagenomic, metatranscriptomic, and additional analysis.
 
 ## Publication
 1. Ziegler, C.A., Mullet, J.I., Coe, A., Vo, N.N., Salcedo, E., Arrigan, D.M., Parker, S.M., Chisholm, S.W. (2025). The shared and distinct roles of Prochlorococcus and co-occurring heterotrophs in regulating community fitness, as revealed by synthetic communities. (In Preparation).
