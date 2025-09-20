@@ -102,6 +102,7 @@ Process meta-transcriptomics samples through Snakemake pipeline located in `pipe
 Process the RNASeq data. The remainder of Data Analysis was performed in R.
 This data analysis was developed to be easily reproducible and understand.
 All corresponding .Rmd files also include a visual .md file that displays the results from the R scripts in a user friendly way.
+The code is located here: scripts/analyze_metaT_data
 
    - 01_differential_expression_analysis: Process raw data to obtain differentially expressed genes
       - Process raw data to obtain edgeR data.
@@ -134,3 +135,9 @@ Process metagenomic data using bowtie and read map to the known reference genome
     - Contain QC plots, comparison between FCM and metagenomic data
     - Visualize abundance of reads using bowtie2
     - Visualize abundance of reads corrected with and without estimated extraction efficiency
+
+### Replicate Analysis   
+We had two experimental trials using identical Thalassospira strains. 
+To ensure that between multiple experimental trials we were getting the same results, we compared the differential expression results.
+The data includes the outputted edgeR results for Prochlorococcus and Thalassospira in both trials.
+Scripts are located here: scripts/replicate_analysis/thalassospira_replicate_analysis
