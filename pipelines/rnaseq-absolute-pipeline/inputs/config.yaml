@@ -1,25 +1,39 @@
-experiment_name: my_exp_name
+# options are 'bwa' 'hisat2' and 'bowtie2'
+
+experiment_name: 24_community_dynamics_paired_end_BMC
+
+aligner: bowtie2 
 
 htseq:
   mapping_qual_threshold: 10 # default is 10
 
 input: 
   sample table: inputs/samples.tsv
-
   reference genomes:
-    MIT9301:
-      genome: inputs/ref_genomes/MIT9301/MIT9301_IMG_2623620961.fna
-      annotation: inputs/ref_genomes/MIT9301/MIT9301_IMG_2623620961.emapper.decorated.gff
-
+    MED4: 
+      genome: inputs/ref_genomes/community_dynamics_genomes/MED4_genome.fasta
+      annotation: inputs/ref_genomes/community_dynamics_genomes/MED4_genome.emapper.decorated.gff
+    Alteromonas_1904:
+      genome: inputs/ref_genomes/community_dynamics_genomes/batch10_bc1018_metaflye_ccs_contig_1_Alteromonas.fasta
+      annotation: inputs/ref_genomes/community_dynamics_genomes/batch10_bc1018_metaflye_ccs_contig_1_Alteromonas.emapper.decorated.gff
+    Thalassospira_1907:
+      genome: inputs/ref_genomes/community_dynamics_genomes/batch10_bc1019_metaflye_ccs_contig_1_Thalassospira.fasta
+      annotation: inputs/ref_genomes/community_dynamics_genomes/batch10_bc1019_metaflye_ccs_contig_1_Thalassospira.emapper.decorated.gff
+    Pseudohoeflea_1940:
+      genome: inputs/ref_genomes/community_dynamics_genomes/batch10.bc1021.metaflye_ccs.fasta
+      annotation: inputs/ref_genomes/community_dynamics_genomes/batch10.bc1021.metaflye_ccs.emapper.decorated.gff
+    Marinobacter_1943:
+      genome: inputs/ref_genomes/community_dynamics_genomes/batch10_bc1022_metaflye_ccs_contig_1_Marinobacter.fasta
+      annotation: inputs/ref_genomes/community_dynamics_genomes/batch10_bc1022_metaflye_ccs_contig_1_Marinobacter.emapper.decorated.gff
     InternalStandard:
       genome: inputs/ref_genomes/internal_standard_seqs/internal_standard_sequences.txt
       annotation: inputs/ref_genomes/internal_standard_seqs/internal_standard_sequences.gff
-  
-  adapter_file: inputs/all_illumina_adapters.fa
+  adapter_file: /nfs/chisholmlab001/chisholmlab/genomic_resources/references/illumina/all_illumina_adapters.fa
   internal_standard_concentration: inputs/internal_standard_concentration.tsv
-  cell_count_data: inputs/cell_count.tsv
+  cell_count_data: inputs/cell_count_data.tsv
+  IS pooled adjustment: inputs/IS_pooled_adjustment.tsv
   
-scratch directory: path/to/scratch
+scratch directory: /nobackup1b/users/chisholmlab/nvo/Bioinfo/24_community_dynamics/Pooled/PairedEndBMC
 results directory: results
 
 feature_types_to_count: [
@@ -28,5 +42,4 @@ feature_types_to_count: [
   'rRNA', 
 ]
 
-read length: 40  # length of sequenced read 
-minimum standard sample: 3  # min number of sample an internal standard needs to be in to keep 
+read length: 111  # length of sequenced read 
