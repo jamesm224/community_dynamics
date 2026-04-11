@@ -44,7 +44,7 @@ Data Analysis: There were a few others that weren't used much but here are most 
 
 ## Reproducing Data Analysis
 ### Install FASTQ files from SRA 
-1. Download raw data from NCBI (BioProject: )
+1. Download raw data from NCBI (BioProject: PRJNA1333906)
 
 ### Genome Assembly  
 Process PacBio long read sequencing samples through a series of scripts located in `pipelines/HIFI-genome-closing-improved` to assemble reference genomes.  
@@ -124,12 +124,12 @@ The code is located here: scripts/analyze_metaT_data
 ### Metagenomics Analysis   
 Process metagenomic data using bowtie and read map to the known reference genomes  
   - Genomes used in this study
-    - Marinobacter ()
-    - Thalassospira ()
-    - Alteromonas ()
-    - Pseudohoeflea ()
+    - Marinobacter (MIT1943: SAMN51820365)
+    - Thalassospira (MIT1907: SAMN51820363)
+    - Alteromonas (MIT1904: SAMN51820361)
+    - Pseudohoeflea (MIT1940: SAMN51820364)
     - MED4 () 
-    - Thermus Thermophilus ()
+    - Thermus Thermophilus (ATCC Genome: Thermus_thermophilus_ATCC_BAA_163)
       
   - Scripts used in data analysis (scripts/analyze_metaG_data/metagenomic_analysis_code.Rmd)
     - Contain QC plots, comparison between FCM and metagenomic data
