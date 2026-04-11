@@ -1,10 +1,10 @@
-# The shared and distinct roles of Prochlorococcus and co-occurring heterotrophic bacteria in regulating community dynamics
+# The shared and distinct roles of *Prochlorococcus* and co-occurring heterotrophic bacteria in regulating community dynamics
 
 ## Introduction
-Prochlorococcus is the most abundant photosynthetic organism on Earth and contributes to almost 10% of marine primary productivity. Co-occurring heterotrophic bactria have been shown to increase Prochlorococcus' fitness and productivity, but there still remains a limited understanding of these interactions and community dynamics. Here we isolated four of the most abundant heterotrophs associated with Prochlorococcus MED4 and established individual MED4-heterotroph co-cultures and a synthetic community of MED4 with all four heterotrophs. Through the use of absolute quantification of RNA, DNA, and cell counts we examined how Prochlorococcus responds to heterotrophs, how heterotrophs respond to the community, and which roles each organism serves within the community. This repository contains all the code to reproduce the bioinformatic analysis performed in this paper, including the code for genome assembly, RNASeq processing, metagenomic, metatranscriptomic, and additional analysis.
+*Prochlorococcus* is the most abundant photosynthetic organism on Earth and contributes to almost 10% of marine primary productivity. Co-occurring heterotrophic bactria have been shown to increase Prochlorococcus' fitness and productivity, but there still remains a limited understanding of these interactions and community dynamics. Here we isolated four of the most abundant heterotrophs associated with *Prochlorococcus* MED4 and established individual MED4-heterotroph co-cultures and a synthetic community of MED4 with all four heterotrophs. Through the use of absolute quantification of RNA, DNA, and cell counts we examined how *Prochlorococcus* responds to heterotrophs, how heterotrophs respond to the community, and which roles each organism serves within the community. This repository contains all the code to reproduce the bioinformatic analysis performed in this paper, including the code for genome assembly, RNASeq processing, metagenomic, metatranscriptomic, and additional analysis.
 
 ## Publication
-1. Ziegler, C.A., Mullet, J.I., Coe, A., Vo, N.N., Salcedo, E., Arrigan, D.M., Parker, S.M., Chisholm, S.W. (2025). The shared and distinct roles of Prochlorococcus and co-occurring heterotrophs in regulating community fitness, as revealed by synthetic communities. (In Preparation).
+1. Ziegler, C.A., Mullet, J.I., Coe, A., Vo, N.N., Salcedo, E., Arrigan, D.M., Parker, S.M., Chisholm, S.W. (2025). The shared and distinct roles of *Prochlorococcus* and co-occurring heterotrophs in regulating community fitness, as revealed by synthetic communities. (In Preparation).
 
 ## Packages 
 RNAseq Pre-processing Pipeline: 
@@ -56,7 +56,6 @@ Process PacBio long read sequencing samples through a series of scripts located 
   - Set up paths to output directories and input files in each script
   - Edit resource specifications and conda package names 
   - Run scripts to process the samples
-
 
 ### RNAseq Pre-processing
 Process meta-transcriptomics samples through Snakemake pipeline located in `pipelines/rnaseq-absolute-pipeline` to obtain internal standard normalized read counts.  
@@ -139,5 +138,5 @@ Process metagenomic data using bowtie and read map to the known reference genome
 ### Replicate Analysis   
 We had two experimental trials using identical Thalassospira strains. 
 To ensure that between multiple experimental trials we were getting the same results, we compared the differential expression results.
-The data includes the outputted edgeR results for Prochlorococcus and Thalassospira in both trials.
+The data includes the outputted edgeR results for *Prochlorococcus* and Thalassospira in both trials.
 Scripts are located here: scripts/replicate_analysis/thalassospira_replicate_analysis
