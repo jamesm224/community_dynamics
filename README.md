@@ -1,9 +1,8 @@
-# The shared and distinct roles of *Prochlorococcus* and co-occurring heterotrophic bacteria in regulating marine microbial community dynamics
-
+# The individual roles of *Prochlorococcus* and co-occurring heterotrophic bacteria in regulating marine microbial community dynamics
 ## Introduction
 *Prochlorococcus* is the most abundant photosynthetic organism on Earth and contributes to almost 10% of marine primary productivity. Co-occurring heterotrophic bactria have been shown to increase Prochlorococcus' fitness and productivity, but there still remains a limited understanding of these interactions and community dynamics. Here we isolated four of the most abundant heterotrophs associated with *Prochlorococcus* MED4 and established individual MED4-heterotroph co-cultures and a synthetic community of MED4 with all four heterotrophs. Through the use of absolute quantification of RNA, DNA, and cell counts we examined how *Prochlorococcus* responds to heterotrophs, how heterotrophs respond to the community, and which roles each organism serves within the community. This repository contains all the code to reproduce the bioinformatic analysis performed in this paper, including the code for genome assembly, RNASeq processing, metagenomic, metatranscriptomic, and additional analysis.
 
-## Publication (In Preparation
+## Publication (In Preparation)
 1. Ziegler, C.A., Mullet, J.I., Coe, A., Vo, N.N., Salcedo, E., Arrigan, D.M., Parker, S.M., Chisholm, S.W. (2025). The shared and distinct roles of *Prochlorococcus* and co-occurring heterotrophic bacteria in regulating community dynamics. (https://doi.org/10.1101/2025.09.25.678681).
 
 ## Packages 
